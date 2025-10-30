@@ -20,6 +20,7 @@ DISABLE_WARNINGS_POP()
 #include <functional>
 #include <iostream>
 #include <vector>
+#include <string>
 
 class Application {
 public:
@@ -41,7 +42,8 @@ public:
                 onMouseReleased(button, mods);
         });
 
-        m_meshes = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/dragon.obj");
+        ball = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/ball.obj");
+        dragon = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/dragon.obj");
 
         try {
             ShaderBuilder defaultBuilder;
@@ -64,19 +66,32 @@ public:
         }
     }
 
+    void renderSolarSystemGUI() {
+    }
+
     void update()
     {
-        int dummyInteger = 0; // Initialized to 0
+        int sceneNr = 0;
+        const char* scenes[] = { "Solar System", "On planet" };
+
         while (!m_window.shouldClose()) {
             // This is your game loop
             // Put your real-time logic and rendering in here
             m_window.updateInput();
 
             // Use ImGui for easy input/output of ints, floats, strings, etc...
-            ImGui::Begin("Window");
-            ImGui::InputInt("This is an integer input", &dummyInteger); // Use ImGui::DragInt or ImGui::DragFloat for larger range of numbers.
-            ImGui::Text("Value is: %i", dummyInteger); // Use C printf formatting rules (%i is a signed integer)
-            ImGui::Checkbox("Use material if no texture", &m_useMaterial);
+            ImGui::Begin("Assignment 2");
+
+            ImGui::Combo("Scene", &sceneNr, scenes, 2);
+
+            if (sceneNr == 0) {
+                renderSolarSystemGUI();
+                m_meshes = &ball;
+            }
+            else {
+                m_meshes = &dragon;
+            }
+
             ImGui::End();
 
             // Clear the screen
@@ -91,7 +106,7 @@ public:
             // https://paroj.github.io/gltut/Illumination/Tut09%20Normal%20Transformation.html
             const glm::mat3 normalModelMatrix = glm::inverseTranspose(glm::mat3(m_modelMatrix));
 
-            for (GPUMesh& mesh : m_meshes) {
+            for (GPUMesh& mesh : (*m_meshes)) {
                 m_defaultShader.bind();
                 glUniformMatrix4fv(m_defaultShader.getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvpMatrix));
                 //Uncomment this line when you use the modelMatrix (or fragmentPosition)
@@ -159,7 +174,10 @@ private:
     Shader m_defaultShader;
     Shader m_shadowShader;
 
-    std::vector<GPUMesh> m_meshes;
+    std::vector<GPUMesh>* m_meshes;
+    std::vector<GPUMesh> ball;
+    std::vector<GPUMesh> dragon;
+
     Texture m_texture;
     bool m_useMaterial { true };
 
