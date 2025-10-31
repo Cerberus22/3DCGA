@@ -2,10 +2,13 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "structs.h"
+#include "mesh.h"
 #include <framework/shader.h>
 #include <iostream>
 
-void renderPlanet(float time, Shader* shader, GPUMesh* ball, Planet planet, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
+void renderPlanet(InterfaceData interfaceData, IndexedShader indexedShader, GPUMesh* ball, Planet planet, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
+	float time = interfaceData.time;
+	
 	// Compute modelmatrix
 	glm::mat4 modelMatrix = glm::scale(glm::mat4(1), glm::vec3(planet.radius)) * glm::rotate(glm::mat4(1), (time * planet.spinSpeed), glm::vec3(0, 1, 0));
 	
@@ -22,16 +25,33 @@ void renderPlanet(float time, Shader* shader, GPUMesh* ball, Planet planet, glm:
 	const glm::mat4 mvpMatrix = projectionMatrix * viewMatrix * modelMatrix;
 
 	
+	// Pass uniforms
+	Shader* shader = indexedShader.shader;
+
 	shader->bind();
 
 	glUniformMatrix4fv(shader->getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvpMatrix));
 	glUniformMatrix4fv(shader->getUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
 	glUniformMatrix3fv(shader->getUniformLocation("normalModelMatrix"), 1, GL_FALSE, glm::value_ptr(normalModelMatrix));
 
+	switch (indexedShader.index) {
+		case 0: {
+			glUniform3fv(shader->getUniformLocation("kd"), 1, glm::value_ptr(interfaceData.material.kd));
+			break;
+		}
+		case 1: {
+			glUniform3fv(shader->getUniformLocation("ks"), 1, glm::value_ptr(interfaceData.material.ks));
+			glUniform1f(shader->getUniformLocation("shininess"), interfaceData.material.shininess);
+
+			glUniform3fv(shader->getUniformLocation("cameraPosition"), 1, glm::value_ptr(interfaceData.trackball->position()));
+			break;
+		}
+	}
+
 	ball->draw(*shader);
 }
 
-void renderSolarSystemScene(float time, Shader* shader, GPUMesh* ball, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
+void renderSolarSystemScene(InterfaceData interfaceData, std::vector<IndexedShader> indexedShaders, GPUMesh* ball, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
 	Material material = {
 		glm::vec3(1,0,0), // kd
 		glm::vec3(1,0,0), // ks
@@ -139,8 +159,24 @@ void renderSolarSystemScene(float time, Shader* shader, GPUMesh* ball, glm::mat4
 	planets.push_back(mars);
 	//planets.push_back(nestRootPlanet);
 
+	for (int i = 0; i < indexedShaders.size(); i++) {
+		for (Planet& p : planets) {
+			IndexedShader& s = indexedShaders.at(i);
 
-	for (Planet& p : planets) {
-		renderPlanet(time, shader, ball, p, projectionMatrix, viewMatrix);
+			if (i == 0) {
+				glEnable(GL_DEPTH_TEST);
+				glDepthMask(GL_TRUE);
+				glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+				// Disable accumulating rendering
+				glEnable(GL_BLEND);
+				glBlendFunc(GL_ONE, GL_ZERO);
+			}
+			else if (i == 1) {
+				// Enable accumulating rendering
+				glEnable(GL_BLEND);
+				glBlendFunc(GL_ONE, GL_ONE);
+			}
+			renderPlanet(interfaceData, s, ball, p, projectionMatrix, viewMatrix);
+		}
 	}
 }

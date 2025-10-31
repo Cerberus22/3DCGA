@@ -1,5 +1,4 @@
 //#include "Image.h"
-#include "mesh.h"
 #include "texture.h"
 #include "solar_system.h"
 // Always include window first (because it includes glfw, which includes GL which needs to be included AFTER glew).
@@ -50,8 +49,14 @@ public:
         ball = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/ball.obj");
         dragon = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/dragon.obj");
 
-        time = 0.f;
+        interfaceData.time = 0.f;
         t_step = 0.05f;
+
+        interfaceData.material.kd = glm::vec3(0.7);
+        interfaceData.material.ks = glm::vec3(1);
+        interfaceData.material.shininess = 3;
+
+        interfaceData.trackball = &trackball;
 
         try {
             ShaderBuilder defaultBuilder;
@@ -69,6 +74,19 @@ public:
             //     Visual Studio: PROJECT => Generate Cache for ComputerGraphics
             //     VS Code: ctrl + shift + p => CMake: Configure => enter
             // ....
+
+            ShaderBuilder lambertianShaderBuilder;
+            lambertianShaderBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/shading/vert_general.glsl");
+            lambertianShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/shading/frag_lambert.glsl");
+            lambertianShader = lambertianShaderBuilder.build();
+            IndexedLambertianShader = { 0, &lambertianShader };
+
+            ShaderBuilder phongShaderBuilder;
+            phongShaderBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/shading/vert_general.glsl");
+            phongShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/shading/frag_phong.glsl");
+            phongShader = phongShaderBuilder.build();
+            IndexedPhongShader = { 1, &phongShader };
+
         } catch (ShaderLoadingException e) {
             std::cerr << e.what() << std::endl;
         }
@@ -76,6 +94,9 @@ public:
 
     void renderSolarSystemGUI() {
         ImGui::SliderFloat("Time Speed", &t_step, 0.001f, 1.f, "%.3f");
+        ImGui::ColorEdit3("Diffuse", glm::value_ptr(interfaceData.material.kd));
+        ImGui::ColorEdit3("Specular", glm::value_ptr(interfaceData.material.ks));
+        ImGui::DragFloat("Shininess", &interfaceData.material.shininess, 0.1, 0.0, 100.0, "%.2f");
     }
 
     void update()
@@ -84,7 +105,7 @@ public:
         const char* scenes[] = { "Solar System", "On planet" };
 
         while (!m_window.shouldClose()) {
-            time += t_step / 100;
+            interfaceData.time += t_step / 100;
 
             // This is your game loop
             // Put your real-time logic and rendering in here
@@ -111,11 +132,13 @@ public:
             glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            // ...
             glEnable(GL_DEPTH_TEST);
+            glDepthFunc(GL_LEQUAL);
+
+            std::vector<IndexedShader> shaders = { IndexedLambertianShader, IndexedPhongShader };
 
             if (sceneNr == 0) {
-                renderSolarSystemScene(time, &m_defaultShader, &(ball.at(0)), m_projectionMatrix, m_viewMatrix);
+                renderSolarSystemScene(interfaceData, shaders, &(ball.at(0)), m_projectionMatrix, m_viewMatrix);
             }
             else {
 
@@ -154,7 +177,6 @@ public:
     void onKeyPressed(int key, int mods)
     {
         std::cout << "Key pressed: " << key << std::endl;
-
     }
 
     // In here you can handle key releases
@@ -163,7 +185,6 @@ public:
     void onKeyReleased(int key, int mods)
     {
         std::cout << "Key released: " << key << std::endl;
-        
     }
 
     // If the mouse is moved this function will be called with the x, y screen-coordinates of the mouse
@@ -195,6 +216,14 @@ private:
     Shader m_defaultShader;
     Shader m_shadowShader;
 
+    // Normal Shaders!
+    Shader lambertianShader;
+    Shader phongShader;
+    
+    // Indexed Shaders!
+    IndexedShader IndexedLambertianShader;
+    IndexedShader IndexedPhongShader;
+
     std::vector<GPUMesh>* m_meshes;
     std::vector<GPUMesh> ball;
     std::vector<GPUMesh> dragon;
@@ -209,7 +238,8 @@ private:
     glm::mat4 m_viewMatrix = glm::lookAt(glm::vec3(-1, 1, -1), glm::vec3(0), glm::vec3(0, 1, 0));
     glm::mat4 m_modelMatrix { 1.0f };
 
-    float time;
+    InterfaceData interfaceData;
+
     float t_step;
 };
 

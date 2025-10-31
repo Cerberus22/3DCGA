@@ -4,5 +4,5 @@
 #include "structs.h"
 #include <framework/shader.h>
 
-void renderPlanet(float time, Shader* shader, GPUMesh* ball, Planet planet, glm::mat4 mvpMatrix, glm::mat4 modelMatrix, glm::mat3 normalModelMatrix);
-void renderSolarSystemScene(float time, Shader* shader, GPUMesh* ball, glm::mat4 projectionMatrix, glm::mat4 viewMatrix);
+void renderPlanet(InterfaceData interfaceData, IndexedShader indexedShader, GPUMesh* ball, Planet planet, glm::mat4 mvpMatrix, glm::mat4 modelMatrix, glm::mat3 normalModelMatrix);
+void renderSolarSystemScene(InterfaceData interfaceData, std::vector<IndexedShader> indexedShaders, GPUMesh* ball, glm::mat4 projectionMatrix, glm::mat4 viewMatrix);
