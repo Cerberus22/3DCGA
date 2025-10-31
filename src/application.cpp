@@ -21,6 +21,7 @@ DISABLE_WARNINGS_POP()
 #include <iostream>
 #include <vector>
 #include <string>
+#include <framework/trackball.h>
 
 class Application {
 public:
@@ -34,6 +35,7 @@ public:
             else if (action == GLFW_RELEASE)
                 onKeyReleased(key, mods);
         });
+        /*
         m_window.registerMouseMoveCallback(std::bind(&Application::onMouseMove, this, std::placeholders::_1));
         m_window.registerMouseButtonCallback([this](int button, int action, int mods) {
             if (action == GLFW_PRESS)
@@ -41,6 +43,12 @@ public:
             else if (action == GLFW_RELEASE)
                 onMouseReleased(button, mods);
         });
+        */
+
+        Trackball trackballInst { &m_window, glm::radians(45.f) };
+        trackballInst.setCamera(glm::vec3(0), glm::vec3(0), 1.f);
+
+        trackball = &trackballInst;
 
         ball = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/ball.obj");
         dragon = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/dragon.obj");
@@ -79,6 +87,9 @@ public:
             // Put your real-time logic and rendering in here
             m_window.updateInput();
 
+            m_viewMatrix = trackball->viewMatrix();
+            m_projectionMatrix = trackball->projectionMatrix();
+
             // Use ImGui for easy input/output of ints, floats, strings, etc...
             ImGui::Begin("Assignment 2");
 
@@ -106,24 +117,27 @@ public:
             // https://paroj.github.io/gltut/Illumination/Tut09%20Normal%20Transformation.html
             const glm::mat3 normalModelMatrix = glm::inverseTranspose(glm::mat3(m_modelMatrix));
 
-            for (GPUMesh& mesh : (*m_meshes)) {
-                m_defaultShader.bind();
-                glUniformMatrix4fv(m_defaultShader.getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvpMatrix));
-                //Uncomment this line when you use the modelMatrix (or fragmentPosition)
-                //glUniformMatrix4fv(m_defaultShader.getUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_modelMatrix));
-                glUniformMatrix3fv(m_defaultShader.getUniformLocation("normalModelMatrix"), 1, GL_FALSE, glm::value_ptr(normalModelMatrix));
-                if (mesh.hasTextureCoords()) {
-                    m_texture.bind(GL_TEXTURE0);
-                    glUniform1i(m_defaultShader.getUniformLocation("colorMap"), 0);
-                    glUniform1i(m_defaultShader.getUniformLocation("hasTexCoords"), GL_TRUE);
-                    glUniform1i(m_defaultShader.getUniformLocation("useMaterial"), GL_FALSE);
-                } else {
-                    glUniform1i(m_defaultShader.getUniformLocation("hasTexCoords"), GL_FALSE);
-                    glUniform1i(m_defaultShader.getUniformLocation("useMaterial"), m_useMaterial);
+            for (int i = 0; i < 2; i++) {
+                for (GPUMesh& mesh : (*m_meshes)) {
+                    m_defaultShader.bind();
+                    glUniformMatrix4fv(m_defaultShader.getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+                    //Uncomment this line when you use the modelMatrix (or fragmentPosition)
+                    //glUniformMatrix4fv(m_defaultShader.getUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_modelMatrix));
+                    glUniformMatrix3fv(m_defaultShader.getUniformLocation("normalModelMatrix"), 1, GL_FALSE, glm::value_ptr(normalModelMatrix));
+                    //glUniform1f(m_defaultShader.getUniformLocation("i"), i);
+                    if (mesh.hasTextureCoords()) {
+                        m_texture.bind(GL_TEXTURE0);
+                        glUniform1i(m_defaultShader.getUniformLocation("colorMap"), 0);
+                        glUniform1i(m_defaultShader.getUniformLocation("hasTexCoords"), GL_TRUE);
+                        glUniform1i(m_defaultShader.getUniformLocation("useMaterial"), GL_FALSE);
+                    }
+                    else {
+                        glUniform1i(m_defaultShader.getUniformLocation("hasTexCoords"), GL_FALSE);
+                        glUniform1i(m_defaultShader.getUniformLocation("useMaterial"), m_useMaterial);
+                    }
+                    mesh.draw(m_defaultShader);
                 }
-                mesh.draw(m_defaultShader);
             }
-
             // Processes input and swaps the window buffer
             m_window.swapBuffers();
         }
@@ -135,6 +149,7 @@ public:
     void onKeyPressed(int key, int mods)
     {
         std::cout << "Key pressed: " << key << std::endl;
+
     }
 
     // In here you can handle key releases
@@ -143,6 +158,7 @@ public:
     void onKeyReleased(int key, int mods)
     {
         std::cout << "Key released: " << key << std::endl;
+        
     }
 
     // If the mouse is moved this function will be called with the x, y screen-coordinates of the mouse
@@ -180,6 +196,8 @@ private:
 
     Texture m_texture;
     bool m_useMaterial { true };
+
+    Trackball* trackball;
 
     // Projection and view matrices for you to fill in and use
     glm::mat4 m_projectionMatrix = glm::perspective(glm::radians(80.0f), 1.0f, 0.1f, 30.0f);

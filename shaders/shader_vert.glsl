@@ -5,10 +5,12 @@ uniform mat4 modelMatrix;
 // Normals should be transformed differently than positions:
 // https://paroj.github.io/gltut/Illumination/Tut09%20Normal%20Transformation.html
 uniform mat3 normalModelMatrix;
+uniform float i;
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
 layout(location = 2) in vec2 texCoord;
+
 
 out vec3 fragPosition;
 out vec3 fragNormal;
@@ -18,7 +20,7 @@ void main()
 {
     gl_Position = mvpMatrix * vec4(position, 1);
     
-    fragPosition    = (modelMatrix * vec4(position, 1)).xyz;
+    fragPosition    = (modelMatrix * vec4(position, 1)).xyz + i * vec3(0.5);
     fragNormal      = normalModelMatrix * normal;
     fragTexCoord    = texCoord;
 }
