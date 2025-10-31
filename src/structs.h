@@ -1,11 +1,5 @@
 #include <glm/glm.hpp>
-
-struct Material {
-	glm::vec3 kd;
-	glm::vec3 ks{ 0.0f };
-	float shininess{ 1.0f };
-	float alpha{ 1.0f };
-};
+#include "mesh.h"
 
 struct Planet {
 	float radius;			// Size of the planet

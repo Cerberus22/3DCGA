@@ -11,8 +11,8 @@ DISABLE_WARNINGS_POP()
 #include <limits>
 
 static constexpr float rotationSpeedFactor = 0.3f;
-static constexpr float translationSpeedFactor = 0.005f;
-static constexpr float zoomSpeedFactor = 0.15f;
+static constexpr float translationSpeedFactor = 0.015f;
+static constexpr float zoomSpeedFactor = 2.f;
 
 // NOTE(Mathijs): field-of-view in radians.
 Trackball::Trackball(Window* pWindow, float fovy, float distFromLookAt, float rotationX, float rotationY)

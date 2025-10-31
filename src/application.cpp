@@ -1,6 +1,7 @@
 //#include "Image.h"
 #include "mesh.h"
 #include "texture.h"
+#include "solar_system.h"
 // Always include window first (because it includes glfw, which includes GL which needs to be included AFTER glew).
 // Can't wait for modules to fix this stuff...
 #include <framework/disable_all_warnings.h>
@@ -28,6 +29,7 @@ public:
     Application()
         : m_window("Final Project", glm::ivec2(1024, 1024), OpenGLVersion::GL41)
         , m_texture(RESOURCE_ROOT "resources/checkerboard.png")
+        , trackball(&m_window, glm::radians(45.f))
     {
         m_window.registerKeyCallback([this](int key, int scancode, int action, int mods) {
             if (action == GLFW_PRESS)
@@ -45,13 +47,11 @@ public:
         });
         */
 
-        Trackball trackballInst { &m_window, glm::radians(45.f) };
-        trackballInst.setCamera(glm::vec3(0), glm::vec3(0), 1.f);
-
-        trackball = &trackballInst;
-
         ball = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/ball.obj");
         dragon = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/dragon.obj");
+
+        time = 0.f;
+        t_step = 0.05f;
 
         try {
             ShaderBuilder defaultBuilder;
@@ -61,7 +61,7 @@ public:
 
             ShaderBuilder shadowBuilder;
             shadowBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/shadow_vert.glsl");
-            shadowBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "Shaders/shadow_frag.glsl");
+            shadowBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/shadow_frag.glsl");
             m_shadowShader = shadowBuilder.build();
 
             // Any new shaders can be added below in similar fashion.
@@ -75,6 +75,7 @@ public:
     }
 
     void renderSolarSystemGUI() {
+        ImGui::SliderFloat("Time Speed", &t_step, 0.001f, 1.f, "%.3f");
     }
 
     void update()
@@ -83,12 +84,14 @@ public:
         const char* scenes[] = { "Solar System", "On planet" };
 
         while (!m_window.shouldClose()) {
+            time += t_step / 100;
+
             // This is your game loop
             // Put your real-time logic and rendering in here
             m_window.updateInput();
 
-            m_viewMatrix = trackball->viewMatrix();
-            m_projectionMatrix = trackball->projectionMatrix();
+            m_viewMatrix = trackball.viewMatrix();
+            m_projectionMatrix = trackball.projectionMatrix();
 
             // Use ImGui for easy input/output of ints, floats, strings, etc...
             ImGui::Begin("Assignment 2");
@@ -97,10 +100,9 @@ public:
 
             if (sceneNr == 0) {
                 renderSolarSystemGUI();
-                m_meshes = &ball;
             }
             else {
-                m_meshes = &dragon;
+
             }
 
             ImGui::End();
@@ -112,31 +114,34 @@ public:
             // ...
             glEnable(GL_DEPTH_TEST);
 
-            const glm::mat4 mvpMatrix = m_projectionMatrix * m_viewMatrix * m_modelMatrix;
-            // Normals should be transformed differently than positions (ignoring translations + dealing with scaling):
-            // https://paroj.github.io/gltut/Illumination/Tut09%20Normal%20Transformation.html
-            const glm::mat3 normalModelMatrix = glm::inverseTranspose(glm::mat3(m_modelMatrix));
+            if (sceneNr == 0) {
+                renderSolarSystemScene(time, &m_defaultShader, &(ball.at(0)), m_projectionMatrix, m_viewMatrix);
+            }
+            else {
 
-            for (int i = 0; i < 2; i++) {
-                for (GPUMesh& mesh : (*m_meshes)) {
-                    m_defaultShader.bind();
-                    glUniformMatrix4fv(m_defaultShader.getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvpMatrix));
-                    //Uncomment this line when you use the modelMatrix (or fragmentPosition)
-                    //glUniformMatrix4fv(m_defaultShader.getUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_modelMatrix));
-                    glUniformMatrix3fv(m_defaultShader.getUniformLocation("normalModelMatrix"), 1, GL_FALSE, glm::value_ptr(normalModelMatrix));
-                    //glUniform1f(m_defaultShader.getUniformLocation("i"), i);
-                    if (mesh.hasTextureCoords()) {
-                        m_texture.bind(GL_TEXTURE0);
-                        glUniform1i(m_defaultShader.getUniformLocation("colorMap"), 0);
-                        glUniform1i(m_defaultShader.getUniformLocation("hasTexCoords"), GL_TRUE);
-                        glUniform1i(m_defaultShader.getUniformLocation("useMaterial"), GL_FALSE);
-                    }
-                    else {
-                        glUniform1i(m_defaultShader.getUniformLocation("hasTexCoords"), GL_FALSE);
-                        glUniform1i(m_defaultShader.getUniformLocation("useMaterial"), m_useMaterial);
-                    }
-                    mesh.draw(m_defaultShader);
-                }
+
+                //const glm::mat4 mvpMatrix = m_projectionMatrix * m_viewMatrix * m_modelMatrix;
+                //// Normals should be transformed differently than positions (ignoring translations + dealing with scaling):
+                //// https://paroj.github.io/gltut/Illumination/Tut09%20Normal%20Transformation.html
+
+                //for (GPUMesh& mesh : (*m_meshes)) {
+                //    m_defaultShader.bind();
+                //    glUniformMatrix4fv(m_defaultShader.getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+                //    //Uncomment this line when you use the modelMatrix (or fragmentPosition)
+                //    glUniformMatrix4fv(m_defaultShader.getUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_modelMatrix));
+                //    glUniformMatrix3fv(m_defaultShader.getUniformLocation("normalModelMatrix"), 1, GL_FALSE, glm::value_ptr(normalModelMatrix));
+                //    //if (mesh.hasTextureCoords()) {
+                //    //    m_texture.bind(GL_TEXTURE0);
+                //    //    glUniform1i(m_defaultShader.getUniformLocation("colorMap"), 0);
+                //    //    glUniform1i(m_defaultShader.getUniformLocation("hasTexCoords"), GL_TRUE);
+                //    //    glUniform1i(m_defaultShader.getUniformLocation("useMaterial"), GL_FALSE);
+                //    //}
+                //    //else {
+                //    //    glUniform1i(m_defaultShader.getUniformLocation("hasTexCoords"), GL_FALSE);
+                //    //    glUniform1i(m_defaultShader.getUniformLocation("useMaterial"), m_useMaterial);
+                //    //}
+                //    mesh.draw(m_defaultShader);
+                //}
             }
             // Processes input and swaps the window buffer
             m_window.swapBuffers();
@@ -197,12 +202,15 @@ private:
     Texture m_texture;
     bool m_useMaterial { true };
 
-    Trackball* trackball;
+    Trackball trackball;
 
     // Projection and view matrices for you to fill in and use
     glm::mat4 m_projectionMatrix = glm::perspective(glm::radians(80.0f), 1.0f, 0.1f, 30.0f);
     glm::mat4 m_viewMatrix = glm::lookAt(glm::vec3(-1, 1, -1), glm::vec3(0), glm::vec3(0, 1, 0));
     glm::mat4 m_modelMatrix { 1.0f };
+
+    float time;
+    float t_step;
 };
 
 int main()
