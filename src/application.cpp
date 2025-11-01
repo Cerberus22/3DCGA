@@ -92,6 +92,11 @@ public:
             cometShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/shading/frag_comet.glsl");
             cometShader = cometShaderBuilder.build();
 
+            ShaderBuilder cometTrailShaderBuilder;
+            cometTrailShaderBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/shading/vert_comet_trail.glsl");
+            cometTrailShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/shading/frag_comet_trail.glsl");
+            cometTrailShader = cometTrailShaderBuilder.build();
+
         } catch (ShaderLoadingException e) {
             std::cerr << e.what() << std::endl;
         }
@@ -126,6 +131,7 @@ public:
 
         ImGui::Separator();
         ImGui::Text("Comet (Bezier curve)");
+        ImGui::Checkbox("Draw comet trajectory", &drawCometTrajectory);
         ImGui::DragFloat("Comet speed", &interfaceData.cometSpeed, 0.05f, 0.0f, 0.2f, "%.05f");
         ImGui::InputFloat("Comet offset x", &interfaceData.cometOffset[0]);
         ImGui::InputFloat("Comet offset y", &interfaceData.cometOffset[1]);
@@ -164,7 +170,7 @@ public:
             ImGui::End();
 
             // Clear the screen
-            glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+            glClearColor(0.02f, 0.02f, 0.05f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             glEnable(GL_DEPTH_TEST);
@@ -176,6 +182,10 @@ public:
                 m_viewMatrix = trackball.viewMatrix(); 
                 renderSolarSystemScene(interfaceData, shaders, &(ball.at(0)), m_projectionMatrix, m_viewMatrix);
                 renderComet(interfaceData, t_step, &(ball.at(0)), cometShader, m_projectionMatrix, m_viewMatrix);
+                if (drawCometTrajectory) {
+                    renderCometTrajectory(interfaceData, cometShader, m_projectionMatrix, m_viewMatrix);
+                }
+                renderCometTrail(cometTrailShader, m_projectionMatrix, m_viewMatrix);
             }
             else {
                 if (selectedViewpoint == 0) {
@@ -243,6 +253,7 @@ private:
     Shader lambertianShader;
     Shader phongShader;
     Shader cometShader;
+    Shader cometTrailShader;
     
     // Indexed Shaders!
     IndexedShader IndexedLambertianShader;
@@ -268,8 +279,7 @@ private:
 
     int selectedViewpoint = 0;
 
-    float ballPathTime = 0.0f;
-    float ballSpeed = 0.05f;
+    bool drawCometTrajectory = false;
 };
 
 int main()
