@@ -1,6 +1,7 @@
 //#include "Image.h"
 #include "texture.h"
 #include "solar_system.h"
+#include "on_planet.h"
 // Always include window first (because it includes glfw, which includes GL which needs to be included AFTER glew).
 // Can't wait for modules to fix this stuff...
 #include <framework/disable_all_warnings.h>
@@ -118,6 +119,8 @@ public:
         int sceneNr = 0;
         const char* scenes[] = { "Solar System", "On planet" };
 
+        const char* viewpoints[] = { "First", "Second" };
+
         while (!m_window.shouldClose()) {
             interfaceData.time += t_step / 100;
 
@@ -137,7 +140,7 @@ public:
                 renderSolarSystemGUI();
             }
             else {
-
+                ImGui::Combo("Viewpoint", &selectedViewpoint, viewpoints, 2);
             }
 
             ImGui::End();
@@ -152,34 +155,20 @@ public:
             std::vector<IndexedShader> shaders = { IndexedLambertianShader, IndexedPhongShader };
 
             if (sceneNr == 0) {
+                m_viewMatrix = trackball.viewMatrix(); 
                 renderSolarSystemScene(interfaceData, shaders, &(ball.at(0)), m_projectionMatrix, m_viewMatrix);
             }
             else {
-                const glm::mat4 mvpMatrix = m_projectionMatrix * m_viewMatrix * m_modelMatrix;
-                // Normals should be transformed differently than positions (ignoring translations + dealing with scaling):
-                // https://paroj.github.io/gltut/Illumination/Tut09%20Normal%20Transformation.html
-
-
-                m_meshes = &cup;
-                for (GPUMesh& mesh : (*m_meshes)) {
-                    const glm::mat3 normalModelMatrix = glm::inverseTranspose(glm::mat3(m_modelMatrix));
-
-                    m_defaultShader.bind();
-                    glUniformMatrix4fv(m_defaultShader.getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvpMatrix));
-                    glUniformMatrix4fv(m_defaultShader.getUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_modelMatrix));
-                    glUniformMatrix3fv(m_defaultShader.getUniformLocation("normalModelMatrix"), 1, GL_FALSE, glm::value_ptr(normalModelMatrix));
-                    //if (mesh.hasTextureCoords()) {
-                    //    m_texture.bind(GL_TEXTURE0);
-                    //    glUniform1i(m_defaultShader.getUniformLocation("colorMap"), 0);
-                    //    glUniform1i(m_defaultShader.getUniformLocation("hasTexCoords"), GL_TRUE);
-                    //    glUniform1i(m_defaultShader.getUniformLocation("useMaterial"), GL_FALSE);
-                    //}
-                    //else {
-                    //    glUniform1i(m_defaultShader.getUniformLocation("hasTexCoords"), GL_FALSE);
-                    //    glUniform1i(m_defaultShader.getUniformLocation("useMaterial"), m_useMaterial);
-                    //}
-                    mesh.draw(m_defaultShader);
+                if (selectedViewpoint == 0) {
+                    m_viewMatrix = trackball.viewMatrix(); 
+                } else {
+                    // TODO: trackball still gets updated, even though we do not intend to
+                    glm::vec3 cameraPos(5, 3, 5);
+                    glm::vec3 target(0, 0, 0);
+                    glm::vec3 up(0, 1, 0);
+                    m_viewMatrix = glm::lookAt(cameraPos, target, up);
                 }
+                renderOnPlanetScene(m_defaultShader, cup, m_projectionMatrix, m_viewMatrix);
             }
             // Processes input and swaps the window buffer
             m_window.swapBuffers();
@@ -256,6 +245,8 @@ private:
     InterfaceData interfaceData;
 
     float t_step;
+
+    int selectedViewpoint = 0;
 };
 
 int main()
