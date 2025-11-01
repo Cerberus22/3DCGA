@@ -51,12 +51,10 @@ public:
 
         interfaceData.time = 0.f;
         t_step = 0.05f;
-
-        interfaceData.material.kd = glm::vec3(0.7);
-        interfaceData.material.ks = glm::vec3(1);
-        interfaceData.material.shininess = 3;
-
+        interfaceData.materials = { {glm::vec3(0.7), glm::vec3(1), 3} };
+        interfaceData.planets = populatePlanets();
         interfaceData.trackball = &trackball;
+        interfaceData.selectedPlanetIndex = 0;
 
         try {
             ShaderBuilder defaultBuilder;
@@ -94,9 +92,26 @@ public:
 
     void renderSolarSystemGUI() {
         ImGui::SliderFloat("Time Speed", &t_step, 0.001f, 1.f, "%.3f");
-        ImGui::ColorEdit3("Diffuse", glm::value_ptr(interfaceData.material.kd));
-        ImGui::ColorEdit3("Specular", glm::value_ptr(interfaceData.material.ks));
-        ImGui::DragFloat("Shininess", &interfaceData.material.shininess, 0.1, 0.0, 100.0, "%.2f");
+
+        // Display planets in scene
+        std::vector<std::string> planetNames = {};
+        for (Planet planet: interfaceData.planets) {
+            planetNames.push_back(planet.name);
+        }
+
+        std::vector<const char*> itemCStrings = {};
+        for (const auto& string : planetNames) {
+            itemCStrings.push_back(string.c_str());
+        }
+
+        int tempSelectedItem = interfaceData.selectedPlanetIndex;
+        if (ImGui::ListBox("Planets", &tempSelectedItem, itemCStrings.data(), (int) itemCStrings.size(), 10)) {
+            interfaceData.selectedPlanetIndex = static_cast<size_t>(tempSelectedItem);
+        }
+
+        ImGui::ColorEdit3("Diffuse", glm::value_ptr(interfaceData.materials[0].kd));
+        ImGui::ColorEdit3("Specular", glm::value_ptr(interfaceData.materials[0].ks));
+        ImGui::DragFloat("Shininess", &interfaceData.materials[0].shininess, 0.1, 0.0, 100.0, "%.2f");
     }
 
     void update()

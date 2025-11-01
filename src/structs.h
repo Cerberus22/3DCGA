@@ -11,20 +11,26 @@ struct IndexedShader {
 	Shader* shader;
 };
 
-/*
-	This struct can be used for passing interface stuff to the actual shaders.
-*/
-struct InterfaceData {
-	Material material;
-	float time;
-	Trackball* trackball;
-};
 
 struct Planet {
+	std::string name;		// Name of the planet
 	float radius;			// Size of the planet
 	float distParent;		// Distance to parent this planet orbits (center to center)
 	float spinSpeed;		// Angular speed with which this planet spins
 	float orbitSpeed;		// Angular speed with which this planet orbits parent
 	Material material;		// Material of this planet
-	Planet* parentPlanet;	// Parent planet to orbit around
+	int parentPlanet;		// Parent planet to orbit around
 };
+
+/*
+	This struct can be used for passing interface stuff to the actual shaders.
+*/
+struct InterfaceData {
+	std::vector<Material> materials;
+	std::vector<Planet> planets;
+	float time;
+	Trackball* trackball;
+	int selectedPlanetIndex;
+};
+
+
