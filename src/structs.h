@@ -26,7 +26,6 @@ struct Planet {
 	This struct can be used for passing interface stuff to the actual shaders.
 */
 struct InterfaceData {
-	std::vector<Material> materials;
 	std::vector<Planet> planets;
 	float time;
 	Trackball* trackball;

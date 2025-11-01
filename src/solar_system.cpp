@@ -20,7 +20,7 @@ std::vector<Planet> populatePlanets() {
 
 	Planet rootPlanet = {
 		"Black Hole",
-		2,			// radius
+		1,			// radius
 		0,			// distParent
 		1,			// spinSpeed
 		0,			// orbitSpeed
@@ -28,74 +28,84 @@ std::vector<Planet> populatePlanets() {
 		-1			// parent
 	};
 
+	Planet sun = {
+		"Sun",
+		0.5f,		// radius
+		10,			// distParent
+		1,			// spinSpeed
+		10,			// orbitSpeed
+		material,	// material
+		0			// parent
+	};
+
 	Planet mercury = {
 		"Mercury",
-		0.6,			// radius
-		4,				// distParent
+		0.25f,			// radius
+		2,				// distParent
 		1,				// spinSpeed
 		3,				// orbitSpeed
 		material,		// material
-		0				// parent
+		1				// parent
 
 	};
 
 	Planet venus = {
 		"Venus",
-		1,			// radius
-		8,			// distParent
+		0.2f,		// radius
+		4,			// distParent
 		2,			// spinSpeed
 		5,			// orbitSpeed
 		material,	// material
-		0			// parent
+		1			// parent
 	};
 
 	Planet earth = {
 		"Earth",
-		1,			// radius
-		12,			// distParent
+		0.3f,		// radius
+		6,			// distParent
 		100,		// spinSpeed
 		4,			// orbitSpeed
 		material,	// material
-		0			// parent
+		1			// parent
 	}; 
 
 	Planet moon1 = {
 		"Moon 1",
-		0.3,		// radius
-		2,			// distParent
+		0.1f,		// radius
+		1,			// distParent
 		2,			// spinSpeed
 		10,			// orbitSpeed
 		material,	// material
-		3			// parent
+		4			// parent
 	};
 	Planet moon2 = {
 		"Moon 2",
-		0.2,		// radius
-		3,			// distParent
+		0.1f,		// radius
+		1.5f,		// distParent
 		2,			// spinSpeed
 		11,			// orbitSpeed
 		material,	// material
-		3			// parent
+		4			// parent
 	};
 
 	Planet mars = {
 		"Mars",
-		0.5,		// radius
-		16,			// distParent
+		0.15f,		// radius
+		8,			// distParent
 		3,			// spinSpeed
 		8,			// orbitSpeed
 		material,	// material
-		0			// parent
+		1			// parent
 	};
 
 	Planet nestRootPlanet = {
 		"Nest root planet",
-		1,
-		20,
-		0.1,
+		0.5f,
+		10,
+		0.1f,
 		1,
 		material,
-		0
+		1
 	};
 
 	//Planet* nestRoot = &nestRootPlanet;
@@ -114,6 +124,7 @@ std::vector<Planet> populatePlanets() {
 	//}
 
 	planets.push_back(rootPlanet);
+	planets.push_back(sun);
 	planets.push_back(mercury);
 	planets.push_back(venus);
 	planets.push_back(earth);
@@ -156,12 +167,12 @@ void renderPlanet(InterfaceData interfaceData, IndexedShader indexedShader, GPUM
 
 	switch (indexedShader.index) {
 		case 0: {
-			glUniform3fv(shader->getUniformLocation("kd"), 1, glm::value_ptr(interfaceData.materials[0].kd));
+			glUniform3fv(shader->getUniformLocation("kd"), 1, glm::value_ptr(planet.material.kd));
 			break;
 		}
 		case 1: {
-			glUniform3fv(shader->getUniformLocation("ks"), 1, glm::value_ptr(interfaceData.materials[0].ks));
-			glUniform1f(shader->getUniformLocation("shininess"), interfaceData.materials[0].shininess);
+			glUniform3fv(shader->getUniformLocation("ks"), 1, glm::value_ptr(planet.material.ks));
+			glUniform1f(shader->getUniformLocation("shininess"), planet.material.shininess);
 
 			glUniform3fv(shader->getUniformLocation("cameraPosition"), 1, glm::value_ptr(interfaceData.trackball->position()));
 			break;
@@ -176,19 +187,24 @@ void renderSolarSystemScene(InterfaceData interfaceData, std::vector<IndexedShad
 		for (Planet p : interfaceData.planets) {
 			IndexedShader& s = indexedShaders.at(i);
 
-			if (i == 0) {
-				glEnable(GL_DEPTH_TEST);
-				glDepthMask(GL_TRUE);
-				glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-				// Disable accumulating rendering
-				glEnable(GL_BLEND);
-				glBlendFunc(GL_ONE, GL_ZERO);
+			switch (i) {
+				case 0: {
+					glEnable(GL_DEPTH_TEST);
+					glDepthMask(GL_TRUE);
+					glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+					// Disable accumulating rendering
+					glEnable(GL_BLEND);
+					glBlendFunc(GL_ONE, GL_ZERO);
+					break;
+				}
+				case 1: {
+					// Enable accumulating rendering
+					glEnable(GL_BLEND);
+					glBlendFunc(GL_ONE, GL_ONE);
+					break;
+				}
 			}
-			else if (i == 1) {
-				// Enable accumulating rendering
-				glEnable(GL_BLEND);
-				glBlendFunc(GL_ONE, GL_ONE);
-			}
+			
 			renderPlanet(interfaceData, s, ball, p, projectionMatrix, viewMatrix);
 		}
 	}

@@ -47,11 +47,10 @@ public:
         */
 
         ball = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/ball.obj");
-        dragon = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/dragon.obj");
+        cup = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/champions.obj");
 
         interfaceData.time = 0.f;
         t_step = 0.05f;
-        interfaceData.materials = { {glm::vec3(0.7), glm::vec3(1), 3} };
         interfaceData.planets = populatePlanets();
         interfaceData.trackball = &trackball;
         interfaceData.selectedPlanetIndex = 0;
@@ -109,9 +108,9 @@ public:
             interfaceData.selectedPlanetIndex = static_cast<size_t>(tempSelectedItem);
         }
 
-        ImGui::ColorEdit3("Diffuse", glm::value_ptr(interfaceData.materials[0].kd));
-        ImGui::ColorEdit3("Specular", glm::value_ptr(interfaceData.materials[0].ks));
-        ImGui::DragFloat("Shininess", &interfaceData.materials[0].shininess, 0.1, 0.0, 100.0, "%.2f");
+        ImGui::ColorEdit3("Diffuse", glm::value_ptr(interfaceData.planets[interfaceData.selectedPlanetIndex].material.kd));
+        ImGui::ColorEdit3("Specular", glm::value_ptr(interfaceData.planets[interfaceData.selectedPlanetIndex].material.ks));
+        ImGui::DragFloat("Shininess", &interfaceData.planets[interfaceData.selectedPlanetIndex].material.shininess, 0.1, 0.0, 100.0, "%.2f");
     }
 
     void update()
@@ -156,30 +155,31 @@ public:
                 renderSolarSystemScene(interfaceData, shaders, &(ball.at(0)), m_projectionMatrix, m_viewMatrix);
             }
             else {
+                const glm::mat4 mvpMatrix = m_projectionMatrix * m_viewMatrix * m_modelMatrix;
+                // Normals should be transformed differently than positions (ignoring translations + dealing with scaling):
+                // https://paroj.github.io/gltut/Illumination/Tut09%20Normal%20Transformation.html
 
 
-                //const glm::mat4 mvpMatrix = m_projectionMatrix * m_viewMatrix * m_modelMatrix;
-                //// Normals should be transformed differently than positions (ignoring translations + dealing with scaling):
-                //// https://paroj.github.io/gltut/Illumination/Tut09%20Normal%20Transformation.html
+                m_meshes = &cup;
+                for (GPUMesh& mesh : (*m_meshes)) {
+                    const glm::mat3 normalModelMatrix = glm::inverseTranspose(glm::mat3(m_modelMatrix));
 
-                //for (GPUMesh& mesh : (*m_meshes)) {
-                //    m_defaultShader.bind();
-                //    glUniformMatrix4fv(m_defaultShader.getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvpMatrix));
-                //    //Uncomment this line when you use the modelMatrix (or fragmentPosition)
-                //    glUniformMatrix4fv(m_defaultShader.getUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_modelMatrix));
-                //    glUniformMatrix3fv(m_defaultShader.getUniformLocation("normalModelMatrix"), 1, GL_FALSE, glm::value_ptr(normalModelMatrix));
-                //    //if (mesh.hasTextureCoords()) {
-                //    //    m_texture.bind(GL_TEXTURE0);
-                //    //    glUniform1i(m_defaultShader.getUniformLocation("colorMap"), 0);
-                //    //    glUniform1i(m_defaultShader.getUniformLocation("hasTexCoords"), GL_TRUE);
-                //    //    glUniform1i(m_defaultShader.getUniformLocation("useMaterial"), GL_FALSE);
-                //    //}
-                //    //else {
-                //    //    glUniform1i(m_defaultShader.getUniformLocation("hasTexCoords"), GL_FALSE);
-                //    //    glUniform1i(m_defaultShader.getUniformLocation("useMaterial"), m_useMaterial);
-                //    //}
-                //    mesh.draw(m_defaultShader);
-                //}
+                    m_defaultShader.bind();
+                    glUniformMatrix4fv(m_defaultShader.getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+                    glUniformMatrix4fv(m_defaultShader.getUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(m_modelMatrix));
+                    glUniformMatrix3fv(m_defaultShader.getUniformLocation("normalModelMatrix"), 1, GL_FALSE, glm::value_ptr(normalModelMatrix));
+                    //if (mesh.hasTextureCoords()) {
+                    //    m_texture.bind(GL_TEXTURE0);
+                    //    glUniform1i(m_defaultShader.getUniformLocation("colorMap"), 0);
+                    //    glUniform1i(m_defaultShader.getUniformLocation("hasTexCoords"), GL_TRUE);
+                    //    glUniform1i(m_defaultShader.getUniformLocation("useMaterial"), GL_FALSE);
+                    //}
+                    //else {
+                    //    glUniform1i(m_defaultShader.getUniformLocation("hasTexCoords"), GL_FALSE);
+                    //    glUniform1i(m_defaultShader.getUniformLocation("useMaterial"), m_useMaterial);
+                    //}
+                    mesh.draw(m_defaultShader);
+                }
             }
             // Processes input and swaps the window buffer
             m_window.swapBuffers();
@@ -241,7 +241,7 @@ private:
 
     std::vector<GPUMesh>* m_meshes;
     std::vector<GPUMesh> ball;
-    std::vector<GPUMesh> dragon;
+    std::vector<GPUMesh> cup;
 
     Texture m_texture;
     bool m_useMaterial { true };
