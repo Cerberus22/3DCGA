@@ -30,6 +30,11 @@ struct InterfaceData {
 	float time;
 	Trackball* trackball;
 	int selectedPlanetIndex;
+	glm::vec3 cometOffset;
+	float cometSpeed;
 };
 
+struct BezierSegment {
+    glm::vec3 p0, p1, p2, p3;
+};
 

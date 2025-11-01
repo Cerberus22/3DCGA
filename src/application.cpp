@@ -55,6 +55,8 @@ public:
         interfaceData.planets = populatePlanets();
         interfaceData.trackball = &trackball;
         interfaceData.selectedPlanetIndex = 0;
+        interfaceData.cometOffset = glm::vec3(2.5f, 2.5f, 0);
+        interfaceData.cometSpeed = 0.05f;
 
         try {
             ShaderBuilder defaultBuilder;
@@ -85,6 +87,11 @@ public:
             phongShader = phongShaderBuilder.build();
             IndexedPhongShader = { 1, &phongShader };
 
+            ShaderBuilder cometShaderBuilder;
+            cometShaderBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/shading/vert_general.glsl");
+            cometShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/shading/frag_comet.glsl");
+            cometShader = cometShaderBuilder.build();
+
         } catch (ShaderLoadingException e) {
             std::cerr << e.what() << std::endl;
         }
@@ -104,14 +111,25 @@ public:
             itemCStrings.push_back(string.c_str());
         }
 
+        ImGui::Separator();
+        ImGui::Text("Planets");
         int tempSelectedItem = interfaceData.selectedPlanetIndex;
-        if (ImGui::ListBox("Planets", &tempSelectedItem, itemCStrings.data(), (int) itemCStrings.size(), 10)) {
+        if (ImGui::ListBox(" ", &tempSelectedItem, itemCStrings.data(), (int) itemCStrings.size(), 10)) {
             interfaceData.selectedPlanetIndex = static_cast<size_t>(tempSelectedItem);
         }
 
+        ImGui::Separator();
+        ImGui::Text("Current planet material");
         ImGui::ColorEdit3("Diffuse", glm::value_ptr(interfaceData.planets[interfaceData.selectedPlanetIndex].material.kd));
         ImGui::ColorEdit3("Specular", glm::value_ptr(interfaceData.planets[interfaceData.selectedPlanetIndex].material.ks));
         ImGui::DragFloat("Shininess", &interfaceData.planets[interfaceData.selectedPlanetIndex].material.shininess, 0.1, 0.0, 100.0, "%.2f");
+
+        ImGui::Separator();
+        ImGui::Text("Comet (Bezier curve)");
+        ImGui::DragFloat("Comet speed", &interfaceData.cometSpeed, 0.05f, 0.0f, 0.2f, "%.05f");
+        ImGui::InputFloat("Comet offset x", &interfaceData.cometOffset[0]);
+        ImGui::InputFloat("Comet offset y", &interfaceData.cometOffset[1]);
+        ImGui::InputFloat("Comet offset z", &interfaceData.cometOffset[2]);
     }
 
     void update()
@@ -157,6 +175,7 @@ public:
             if (sceneNr == 0) {
                 m_viewMatrix = trackball.viewMatrix(); 
                 renderSolarSystemScene(interfaceData, shaders, &(ball.at(0)), m_projectionMatrix, m_viewMatrix);
+                renderComet(interfaceData, t_step, &(ball.at(0)), cometShader, m_projectionMatrix, m_viewMatrix);
             }
             else {
                 if (selectedViewpoint == 0) {
@@ -223,6 +242,7 @@ private:
     // Normal Shaders!
     Shader lambertianShader;
     Shader phongShader;
+    Shader cometShader;
     
     // Indexed Shaders!
     IndexedShader IndexedLambertianShader;
@@ -247,6 +267,9 @@ private:
     float t_step;
 
     int selectedViewpoint = 0;
+
+    float ballPathTime = 0.0f;
+    float ballSpeed = 0.05f;
 };
 
 int main()

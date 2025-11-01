@@ -209,3 +209,41 @@ void renderSolarSystemScene(InterfaceData interfaceData, std::vector<IndexedShad
 		}
 	}
 }
+
+glm::vec3 evaluateCubicBezier(const BezierSegment& seg, float t) {
+    float u = 1.0f - t;
+    return u*u*u*seg.p0 + 3*u*u*t*seg.p1 + 3*u*t*t*seg.p2 + t*t*t*seg.p3;
+}
+
+float cometPathProgress = 0;
+
+void renderComet(InterfaceData interfaceData, float deltaTime, GPUMesh* ballMesh, Shader& cometShader, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
+    glm::vec3 offset = interfaceData.cometOffset;
+
+	
+	std::vector<BezierSegment> cometPath = {
+		{glm::vec3(-5, 0, -5) + offset, glm::vec3(-2, 3, -3) + offset, glm::vec3(2, 3, 3) + offset, glm::vec3(5, 0, 5) + offset},
+		{glm::vec3(5, 0, 5) + offset, glm::vec3(7, -2, 8) + offset, glm::vec3(-7, 2, 8) + offset, glm::vec3(-5, 0, 5) + offset},
+		{glm::vec3(-5, 0, 5) + offset, glm::vec3(-8, 3, 2) + offset, glm::vec3(8, -3, -2) + offset, glm::vec3(5, 0, -5) + offset},
+		{glm::vec3(5, 0, -5) + offset, glm::vec3(7, 2, -8) + offset, glm::vec3(-7, -2, -8) + offset, glm::vec3(-5, 0, -5) + offset}
+	};
+	int numSegments = (int)cometPath.size();
+
+	cometPathProgress += interfaceData.cometSpeed * deltaTime;
+    if (cometPathProgress > 1) cometPathProgress -= 1;
+    
+    int currentSegmentIndex = std::floor(cometPathProgress * numSegments);
+	if (currentSegmentIndex >= numSegments) currentSegmentIndex = numSegments - 1; // edge case when we are exactly at 1
+    
+	float posAlongSegment = (cometPathProgress * numSegments) - currentSegmentIndex;
+    glm::vec3 cometPos = evaluateCubicBezier(cometPath[currentSegmentIndex], posAlongSegment);
+
+    glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), cometPos) * glm::scale(glm::mat4(1.0f), glm::vec3(0.1f));
+    glm::mat4 mvp = projectionMatrix * viewMatrix * modelMatrix;
+
+    cometShader.bind();
+    glUniformMatrix4fv(cometShader.getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvp));
+    glUniform3fv(cometShader.getUniformLocation("emissiveColor"), 1, glm::value_ptr(glm::vec3(1.0f, 0.8f, 0.6f))); // comet color
+
+    ballMesh->draw(cometShader);
+}
