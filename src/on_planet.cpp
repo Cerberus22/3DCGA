@@ -26,7 +26,7 @@ void renderOnPlanetScene(InterfaceData interfaceData, Shader& shader, std::vecto
 		glUniform1f(shader.getUniformLocation("ambientCoeff"), 0);
 		
 		glUniform3fv(shader.getUniformLocation("cameraPosition"), 1, glm::value_ptr(interfaceData.trackball->position()));
-
+		
 		mesh.draw(shader);
 	}
 }

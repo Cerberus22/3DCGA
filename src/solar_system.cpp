@@ -12,7 +12,7 @@
 std::vector<Planet> populatePlanets() {
 	Material material = {
 		glm::vec3(0.8f, 0.7f, 0.6f), // kd
-		glm::vec3(10.f, 0.9f, 0.8f), // ks
+		glm::vec3(1.f, 0.9f, 0.8f), // ks
 		5, // shininess
 		1, // alpha
 		NULL
@@ -40,7 +40,9 @@ std::vector<Planet> populatePlanets() {
 		10,			// orbitSpeed
 		material,	// material
 		0,			// parent
-		1
+		1,			// ambient coeff
+		false,		// has normal map
+		true		// has sun texture
 	};
 
 	Planet mercury = {
@@ -50,8 +52,9 @@ std::vector<Planet> populatePlanets() {
 		1,				// spinSpeed
 		3,				// orbitSpeed
 		material,		// material
-		1				// parent
-
+		1,				// parent
+		0,
+		true
 	};
 
 	Planet venus = {
@@ -61,7 +64,9 @@ std::vector<Planet> populatePlanets() {
 		2,			// spinSpeed
 		5,			// orbitSpeed
 		material,	// material
-		1			// parent
+		1,			// parent
+		0,
+		true
 	};
 
 	Planet earth = {
@@ -151,12 +156,14 @@ void renderPlanet(InterfaceData interfaceData, Shader& shader, GPUMesh* ball, Pl
 	Planet* current = &planet;
 	int parentIndex = planet.parentPlanet;
 
-
 	while (parentIndex != -1) {
 		modelMatrix = glm::rotate(glm::mat4(1), (time * current->orbitSpeed), glm::vec3(0, 1, 0)) * glm::translate(glm::mat4(1), glm::vec3(current->distParent, 0, 0)) * modelMatrix;
 		current = &interfaceData.planets.at(current->parentPlanet);
 		parentIndex = interfaceData.planets.at(parentIndex).parentPlanet;
 	}
+	
+	Planet* sun = &interfaceData.planets.at(1);
+	glm::mat4 sunMatrix = glm::rotate(glm::mat4(1), (time * sun->orbitSpeed), glm::vec3(0, 1, 0)) * glm::translate(glm::mat4(1), glm::vec3(sun->distParent, 0, 0));
 
 	const glm::mat3 normalModelMatrix = glm::inverseTranspose(glm::mat3(modelMatrix));
 	const glm::mat4 mvpMatrix = projectionMatrix * viewMatrix * modelMatrix;
@@ -174,6 +181,15 @@ void renderPlanet(InterfaceData interfaceData, Shader& shader, GPUMesh* ball, Pl
 	glUniform3fv(shader.getUniformLocation("ks"), 1, glm::value_ptr(planet.material.ks));
 	glUniform1f(shader.getUniformLocation("shininess"), planet.material.shininess);
 	glUniform3fv(shader.getUniformLocation("cameraPosition"), 1, glm::value_ptr(interfaceData.trackball->position()));
+	
+	glUniform3fv(shader.getUniformLocation("lightPosition"), 1, glm::value_ptr(sunMatrix * glm::vec4(0,0,0,1)));
+	glUniform3fv(shader.getUniformLocation("lightColor"), 1, glm::value_ptr(sun->material.kd));
+
+	glUniform1i(shader.getUniformLocation("hasNormalMap"), planet.hasNormalMap);
+	glUniform1i(shader.getUniformLocation("hasSunTexture"), planet.hasSunTexture);
+	glUniform1i(shader.getUniformLocation("normalMap"), 0);
+	glUniform1f(shader.getUniformLocation("offsetStrength"), interfaceData.normalOffsetStrength);
+	interfaceData.noise->bind(GL_TEXTURE0);
 
 	ball->draw(shader);
 }

@@ -2,6 +2,7 @@
 #include "texture.h"
 #include "solar_system.h"
 #include "on_planet.h"
+#include "render_normal_map.h"
 // Always include window first (because it includes glfw, which includes GL which needs to be included AFTER glew).
 // Can't wait for modules to fix this stuff...
 #include <framework/disable_all_warnings.h>
@@ -29,6 +30,7 @@ public:
     Application()
         : m_window("Final Project", glm::ivec2(1024, 1024), OpenGLVersion::GL41)
         , m_texture(RESOURCE_ROOT "resources/checkerboard.png")
+        , noise(RESOURCE_ROOT "resources/textures/noise.png")
         , trackball(&m_window, glm::radians(45.f))
     {
         m_window.registerKeyCallback([this](int key, int scancode, int action, int mods) {
@@ -47,7 +49,7 @@ public:
         });
         */
 
-        ball = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/ball_2.obj");
+        ball = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/ball_s.obj");
         cup = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/champions.obj");
 
         interfaceData.time = 0.f;
@@ -59,8 +61,12 @@ public:
 
         interfaceData.cupMaterial.rho = 1.f;
         interfaceData.cupMaterial.sigma = 0.f;
-
         interfaceData.cupMaterial.m.kd = glm::vec3(1.0);
+
+        interfaceData.noise = &noise;
+        interfaceData.normalOffsetStrength = 0.4f;
+
+        //normalMap = renderSmoothNormalMap();
 
         try {
             ShaderBuilder defaultBuilder;
@@ -105,7 +111,7 @@ public:
     }
 
     void renderSolarSystemGUI() {
-        ImGui::SliderFloat("Time Speed", &t_step, 0.001f, 1.f, "%.3f");
+        ImGui::SliderFloat("Time Speed", &t_step, 0.f, 1.f, "%.3f");
 
         // Display planets in scene
         std::vector<std::string> planetNames = {};
@@ -125,12 +131,16 @@ public:
             interfaceData.selectedPlanetIndex = static_cast<size_t>(tempSelectedItem);
         }
 
+        Planet& p = interfaceData.planets[interfaceData.selectedPlanetIndex];
+
         ImGui::Separator();
         ImGui::Text("Current planet material");
-        ImGui::ColorEdit3("Diffuse", glm::value_ptr(interfaceData.planets[interfaceData.selectedPlanetIndex].material.kd));
-        ImGui::ColorEdit3("Specular", glm::value_ptr(interfaceData.planets[interfaceData.selectedPlanetIndex].material.ks));
-        ImGui::DragFloat("Shininess", &interfaceData.planets[interfaceData.selectedPlanetIndex].material.shininess, 0.1, 0.0, 100.0, "%.2f");
-        ImGui::SliderFloat("Ambient coeff.", &interfaceData.planets[interfaceData.selectedPlanetIndex].ambientCoeff, 0.f, 1.f, "%.1f");
+        ImGui::ColorEdit3("Diffuse", glm::value_ptr(p.material.kd));
+        ImGui::ColorEdit3("Specular", glm::value_ptr(p.material.ks));
+        ImGui::DragFloat("Shininess", &p.material.shininess, 0.1f, 0.1f, 10.0f, "%.2f");
+        ImGui::SliderFloat("Ambient coeff.", &p.ambientCoeff, 0.f, 1.f, "%.1f");
+        ImGui::Checkbox("Noise", &p.hasNormalMap);
+        ImGui::SliderFloat("Normal offset", &interfaceData.normalOffsetStrength, 0.f, 1.f, "%.2f");
 
         ImGui::Separator();
         ImGui::Text("Comet (Bezier curve)");
@@ -173,7 +183,7 @@ public:
             ImGui::End();
 
             // Clear the screen
-            glClearColor(0.02f, 0.02f, 0.05f, 1.0f);
+            glClearColor(0.04f, 0.04f, 0.08f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             glEnable(GL_DEPTH_TEST);
@@ -203,6 +213,7 @@ public:
             // Processes input and swaps the window buffer
             m_window.swapBuffers();
         }
+        //destruct();
     }
 
     // In here you can handle key presses
@@ -271,6 +282,9 @@ private:
     glm::mat4 m_modelMatrix { 1.0f };
 
     InterfaceData interfaceData;
+
+    Texture noise;
+    GLuint normalMap;
 
     float t_step;
 

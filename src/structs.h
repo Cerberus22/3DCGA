@@ -1,5 +1,6 @@
 #include <glm/glm.hpp>
 #include "mesh.h"
+#include "texture.h"
 #include <framework/trackball.h>
 
 struct Planet {
@@ -11,6 +12,8 @@ struct Planet {
 	Material material;		// Material of this planet
 	int parentPlanet;		// Parent planet to orbit around
 	float ambientCoeff = 0;
+	bool hasNormalMap = false;
+	bool hasSunTexture = false;
 };
 
 struct CupMaterial {
@@ -30,6 +33,8 @@ struct InterfaceData {
 	float time;
 	int selectedPlanetIndex;
 	float cometSpeed;
+	Texture* noise;
+	float normalOffsetStrength;
 
 	// On-planet Stuff
 	CupMaterial cupMaterial;
