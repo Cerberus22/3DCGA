@@ -1,11 +1,11 @@
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include "mesh.h"
+#include "structs.h"
 #include <framework/shader.h>
 #include <iostream>
 
-void renderOnPlanetScene(Shader& shader, std::vector<GPUMesh>& cup, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
+void renderOnPlanetScene(InterfaceData interfaceData, Shader& shader, std::vector<GPUMesh>& cup, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
 	const glm::mat4 modelMatrix = glm::mat4(1);
 	
 	const glm::mat4 mvpMatrix = projectionMatrix * viewMatrix * modelMatrix;
@@ -19,16 +19,14 @@ void renderOnPlanetScene(Shader& shader, std::vector<GPUMesh>& cup, glm::mat4 pr
 		glUniformMatrix4fv(shader.getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvpMatrix));
 		glUniformMatrix4fv(shader.getUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
 		glUniformMatrix3fv(shader.getUniformLocation("normalModelMatrix"), 1, GL_FALSE, glm::value_ptr(normalModelMatrix));
-		//if (mesh.hasTextureCoords()) {
-		//    m_texture.bind(GL_TEXTURE0);
-		//    glUniform1i(shader.getUniformLocation("colorMap"), 0);
-		//    glUniform1i(shader.getUniformLocation("hasTexCoords"), GL_TRUE);
-		//    glUniform1i(shader.getUniformLocation("useMaterial"), GL_FALSE);
-		//}
-		//else {
-		//    glUniform1i(shader.getUniformLocation("hasTexCoords"), GL_FALSE);
-		//    glUniform1i(shader.getUniformLocation("useMaterial"), m_useMaterial);
-		//}
+
+		glUniform3fv(shader.getUniformLocation("kd"), 1, glm::value_ptr(interfaceData.cupMaterial.m.kd));
+		glUniform1f(shader.getUniformLocation("rho"), interfaceData.cupMaterial.rho);
+		glUniform1f(shader.getUniformLocation("sigma"), interfaceData.cupMaterial.sigma);
+		glUniform1f(shader.getUniformLocation("ambientCoeff"), 0);
+		
+		glUniform3fv(shader.getUniformLocation("cameraPosition"), 1, glm::value_ptr(interfaceData.trackball->position()));
+
 		mesh.draw(shader);
 	}
 }

@@ -47,7 +47,7 @@ public:
         });
         */
 
-        ball = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/ball.obj");
+        ball = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/ball_2.obj");
         cup = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/champions.obj");
 
         interfaceData.time = 0.f;
@@ -55,8 +55,12 @@ public:
         interfaceData.planets = populatePlanets();
         interfaceData.trackball = &trackball;
         interfaceData.selectedPlanetIndex = 0;
-        interfaceData.cometOffset = glm::vec3(2.5f, 2.5f, 0);
         interfaceData.cometSpeed = 0.05f;
+
+        interfaceData.cupMaterial.rho = 1.f;
+        interfaceData.cupMaterial.sigma = 0.f;
+
+        interfaceData.cupMaterial.m.kd = glm::vec3(1.0);
 
         try {
             ShaderBuilder defaultBuilder;
@@ -75,26 +79,24 @@ public:
             //     VS Code: ctrl + shift + p => CMake: Configure => enter
             // ....
 
-            ShaderBuilder lambertianShaderBuilder;
-            lambertianShaderBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/shading/vert_general.glsl");
-            lambertianShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/shading/frag_lambert.glsl");
-            lambertianShader = lambertianShaderBuilder.build();
-            IndexedLambertianShader = { 0, &lambertianShader };
+            ShaderBuilder simpleShaderBuilder;
+            simpleShaderBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/shading/vert_general.glsl");
+            simpleShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/shading/frag_simple_shading.glsl");
+            simpleShader = simpleShaderBuilder.build();
 
-            ShaderBuilder phongShaderBuilder;
-            phongShaderBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/shading/vert_general.glsl");
-            phongShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/shading/frag_phong.glsl");
-            phongShader = phongShaderBuilder.build();
-            IndexedPhongShader = { 1, &phongShader };
+            ShaderBuilder advancedShaderBuilder;
+            advancedShaderBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/shading/vert_general.glsl");
+            advancedShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/shading/frag_oren_nayar.glsl");
+            advancedShader = advancedShaderBuilder.build();
 
             ShaderBuilder cometShaderBuilder;
             cometShaderBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/shading/vert_general.glsl");
-            cometShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/shading/frag_comet.glsl");
+            cometShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/comet/frag_comet.glsl");
             cometShader = cometShaderBuilder.build();
 
             ShaderBuilder cometTrailShaderBuilder;
-            cometTrailShaderBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/shading/vert_comet_trail.glsl");
-            cometTrailShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/shading/frag_comet_trail.glsl");
+            cometTrailShaderBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/comet/vert_comet_trail.glsl");
+            cometTrailShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/comet/frag_comet_trail.glsl");
             cometTrailShader = cometTrailShaderBuilder.build();
 
         } catch (ShaderLoadingException e) {
@@ -128,14 +130,12 @@ public:
         ImGui::ColorEdit3("Diffuse", glm::value_ptr(interfaceData.planets[interfaceData.selectedPlanetIndex].material.kd));
         ImGui::ColorEdit3("Specular", glm::value_ptr(interfaceData.planets[interfaceData.selectedPlanetIndex].material.ks));
         ImGui::DragFloat("Shininess", &interfaceData.planets[interfaceData.selectedPlanetIndex].material.shininess, 0.1, 0.0, 100.0, "%.2f");
+        ImGui::SliderFloat("Ambient coeff.", &interfaceData.planets[interfaceData.selectedPlanetIndex].ambientCoeff, 0.f, 1.f, "%.1f");
 
         ImGui::Separator();
         ImGui::Text("Comet (Bezier curve)");
         ImGui::Checkbox("Draw comet trajectory", &drawCometTrajectory);
         ImGui::DragFloat("Comet speed", &interfaceData.cometSpeed, 0.05f, 0.0f, 0.2f, "%.05f");
-        ImGui::InputFloat("Comet offset x", &interfaceData.cometOffset[0]);
-        ImGui::InputFloat("Comet offset y", &interfaceData.cometOffset[1]);
-        ImGui::InputFloat("Comet offset z", &interfaceData.cometOffset[2]);
     }
 
     void update()
@@ -165,6 +165,9 @@ public:
             }
             else {
                 ImGui::Combo("Viewpoint", &selectedViewpoint, viewpoints, 2);
+                ImGui::ColorEdit3("Diffuse", glm::value_ptr(interfaceData.cupMaterial.m.kd));
+                ImGui::SliderFloat("Rho (Albedo)", &interfaceData.cupMaterial.rho, 0, 1, "%.2f");
+                ImGui::SliderFloat("Sigma (Rough)", &interfaceData.cupMaterial.sigma, 0, 1, "%.2f");
             }
 
             ImGui::End();
@@ -176,11 +179,9 @@ public:
             glEnable(GL_DEPTH_TEST);
             glDepthFunc(GL_LEQUAL);
 
-            std::vector<IndexedShader> shaders = { IndexedLambertianShader, IndexedPhongShader };
-
             if (sceneNr == 0) {
                 m_viewMatrix = trackball.viewMatrix(); 
-                renderSolarSystemScene(interfaceData, shaders, &(ball.at(0)), m_projectionMatrix, m_viewMatrix);
+                renderSolarSystemScene(interfaceData, simpleShader, &(ball.at(0)), m_projectionMatrix, m_viewMatrix);
                 renderComet(interfaceData, t_step, &(ball.at(0)), cometShader, m_projectionMatrix, m_viewMatrix);
                 if (drawCometTrajectory) {
                     renderCometTrajectory(interfaceData, cometShader, m_projectionMatrix, m_viewMatrix);
@@ -197,7 +198,7 @@ public:
                     glm::vec3 up(0, 1, 0);
                     m_viewMatrix = glm::lookAt(cameraPos, target, up);
                 }
-                renderOnPlanetScene(m_defaultShader, cup, m_projectionMatrix, m_viewMatrix);
+                renderOnPlanetScene(interfaceData, advancedShader, cup, m_projectionMatrix, m_viewMatrix);
             }
             // Processes input and swaps the window buffer
             m_window.swapBuffers();
@@ -250,15 +251,11 @@ private:
     Shader m_shadowShader;
 
     // Normal Shaders!
-    Shader lambertianShader;
-    Shader phongShader;
+    Shader simpleShader;
+    Shader advancedShader;
     Shader cometShader;
     Shader cometTrailShader;
     
-    // Indexed Shaders!
-    IndexedShader IndexedLambertianShader;
-    IndexedShader IndexedPhongShader;
-
     std::vector<GPUMesh>* m_meshes;
     std::vector<GPUMesh> ball;
     std::vector<GPUMesh> cup;

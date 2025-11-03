@@ -1,5 +1,7 @@
 #version 410
 
+uniform float ambientCoeff;
+uniform vec3 kd;
 uniform vec3 ks;
 uniform float shininess;
 // uniform float transparency;
@@ -22,12 +24,14 @@ void main()
     vec3 R = normalize(reflect(-L, N));
     vec3 V = normalize(cameraPosition - fragPosition);
 
+    vec3 diff = vec3(0);
     vec3 spec = vec3(0);
     if (dot(N, L) > 0) {
+        diff = dot(N, L) * lightColor * kd;
         spec = pow(
             clamp(dot(V, R), 0, 1), 
             shininess
         ) * lightColor * ks;
     }
-    fragColor = vec4(spec, 1);
+    fragColor = vec4(min(ambientCoeff * kd + diff, 1) + spec, 1);
 }
