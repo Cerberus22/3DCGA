@@ -10,14 +10,6 @@
 
 // Populates planet scene with planets
 std::vector<Planet> populatePlanets() {
-	Material material = {
-		glm::vec3(0.8f, 0.7f, 0.6f), // kd
-		glm::vec3(1.f, 0.9f, 0.8f), // ks
-		5, // shininess
-		1, // alpha
-		NULL
-	};
-	
 	std::vector<Planet> planets = {};
 	planets.reserve(20);
 
@@ -27,9 +19,15 @@ std::vector<Planet> populatePlanets() {
 		0,			// distParent
 		1,			// spinSpeed
 		0,			// orbitSpeed
-		material,	// material
+		{
+			glm::vec3(0),	// kd
+			glm::vec3(0), 	// ks
+			5,				// shininess
+			1, 				// alpha
+			NULL
+		},
 		-1,			// parent
-		0
+		0			// ambient coeff
 	};
 
 	Planet sun = {
@@ -38,7 +36,13 @@ std::vector<Planet> populatePlanets() {
 		10,			// distParent
 		1,			// spinSpeed
 		10,			// orbitSpeed
-		material,	// material
+		{
+			glm::vec3(1),	// kd
+			glm::vec3(1), 	// ks
+			5,				// shininess
+			1, 				// alpha
+			NULL
+		},
 		0,			// parent
 		1,			// ambient coeff
 		false,		// has normal map
@@ -47,11 +51,17 @@ std::vector<Planet> populatePlanets() {
 
 	Planet mercury = {
 		"Mercury",
-		0.25f,			// radius
+		0.15f,			// radius
 		2,				// distParent
 		1,				// spinSpeed
 		3,				// orbitSpeed
-		material,		// material
+		{
+			glm::vec3(0.3f, 0.6f, 0.2f),	// kd
+			glm::vec3(0.3f, 0.8f, 0.2f), 	// ks
+			5,								// shininess
+			1, 								// alpha
+			NULL
+		},
 		1,				// parent
 		0,
 		true
@@ -63,7 +73,13 @@ std::vector<Planet> populatePlanets() {
 		4,			// distParent
 		2,			// spinSpeed
 		5,			// orbitSpeed
-		material,	// material
+		{
+			glm::vec3(1.0f, 0.6f, 0.0f),	// kd
+			glm::vec3(1.0f, 0.8f, 0.0f), 	// ks
+			5,								// shininess
+			1, 								// alpha
+			NULL
+		},
 		1,			// parent
 		0,
 		true
@@ -75,7 +91,13 @@ std::vector<Planet> populatePlanets() {
 		6,			// distParent
 		100,		// spinSpeed
 		4,			// orbitSpeed
-		material,	// material
+		{
+			glm::vec3(0.0f, 0.2f, 1.0f),	// kd
+			glm::vec3(0.0f, 0.6f, 0.4f), 	// ks
+			5,								// shininess
+			1, 								// alpha
+			NULL
+		},
 		1			// parent
 	}; 
 
@@ -85,7 +107,13 @@ std::vector<Planet> populatePlanets() {
 		1,			// distParent
 		2,			// spinSpeed
 		10,			// orbitSpeed
-		material,	// material
+		{
+			glm::vec3(0.2f, 0.2f, 0.2f),	// kd
+			glm::vec3(0.2f, 0.2f, 0.2f), 	// ks
+			5,								// shininess
+			1, 								// alpha
+			NULL
+		},
 		4			// parent
 	};
 	Planet moon2 = {
@@ -94,7 +122,13 @@ std::vector<Planet> populatePlanets() {
 		1.5f,		// distParent
 		2,			// spinSpeed
 		11,			// orbitSpeed
-		material,	// material
+		{
+			glm::vec3(0.4f, 0.2f, 0.4f),	// kd
+			glm::vec3(0.4f, 0.2f, 0.4f), 	// ks
+			5,								// shininess
+			1, 								// alpha
+			NULL
+		},
 		4			// parent
 	};
 
@@ -104,7 +138,13 @@ std::vector<Planet> populatePlanets() {
 		8,			// distParent
 		3,			// spinSpeed
 		8,			// orbitSpeed
-		material,	// material
+		{
+			glm::vec3(1.0f, 0.2f, 0.0f),	// kd
+			glm::vec3(1.0f, 0.4f, 0.0f), 	// ks
+			5,								// shininess
+			1, 								// alpha
+			NULL
+		},
 		1			// parent
 	};
 
@@ -114,7 +154,13 @@ std::vector<Planet> populatePlanets() {
 		10,
 		0.1f,
 		1,
-		material,
+		{
+			glm::vec3(1),	// kd
+			glm::vec3(1), 	// ks
+			5,				// shininess
+			1, 				// alpha
+			NULL
+		},
 		1
 	};
 
