@@ -46,6 +46,9 @@ public:
     // Bind VAO and call glDrawElements.
     void draw(const Shader& drawingShader);
 
+    std::vector<Vertex> vertices;
+    std::vector<glm::uvec3> triangles;
+
 private:
     void moveInto(GPUMesh&&);
     void freeGpuMemory();

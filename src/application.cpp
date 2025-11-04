@@ -31,6 +31,8 @@ public:
         : m_window("Final Project", glm::ivec2(1800, 900), OpenGLVersion::GL41)
         , m_texture(RESOURCE_ROOT "resources/checkerboard.png")
         , noise(RESOURCE_ROOT "resources/textures/noise.png")
+        , nightSky(RESOURCE_ROOT "resources/textures/nightsky.jpg")
+        , wallNormal(RESOURCE_ROOT "resources/textures/normalmappy.jpg")
         , trackball(&m_window, glm::radians(45.f))
     {
         m_window.registerKeyCallback([this](int key, int scancode, int action, int mods) {
@@ -65,6 +67,8 @@ public:
         interfaceData.cupMaterial.m.kd = glm::vec3(1.0);
 
         interfaceData.noise = &noise;
+        interfaceData.nightSky = &nightSky;
+        interfaceData.wallNormal = &wallNormal;
         interfaceData.normalOffsetStrength = 0.4f;
 
         // Create minimap stuffs
@@ -94,6 +98,11 @@ public:
             simpleShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/shading/frag_simple_shading.glsl");
             simpleShader = simpleShaderBuilder.build();
 
+            ShaderBuilder normalShaderBuilder;
+            normalShaderBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/vert_normal.glsl");
+            normalShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/frag_normal.glsl");
+            normalShader = normalShaderBuilder.build();
+
             ShaderBuilder advancedShaderBuilder;
             advancedShaderBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/shading/vert_general.glsl");
             advancedShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/shading/frag_oren_nayar.glsl");
@@ -108,6 +117,11 @@ public:
             cometTrailShaderBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/comet/vert_comet_trail.glsl");
             cometTrailShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/comet/frag_comet_trail.glsl");
             cometTrailShader = cometTrailShaderBuilder.build();
+
+            ShaderBuilder nigthSkyShaderBuilder;
+            nigthSkyShaderBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/shading/vert_general.glsl");
+            nigthSkyShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/frag_minimap.glsl");
+            nightSkyShader = nigthSkyShaderBuilder.build();
 
             ShaderBuilder minimapShaderBuilder;
             minimapShaderBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/vert_minimap.glsl");
@@ -201,7 +215,7 @@ public:
 
             if (sceneNr == 0) {
                 m_viewMatrix = trackball.viewMatrix(); 
-                renderSolarSystemScene(interfaceData, simpleShader, &(ball.at(0)), m_projectionMatrix, m_viewMatrix);
+                renderSolarSystemScene(interfaceData, simpleShader, nightSkyShader, &(ball.at(0)), m_projectionMatrix, m_viewMatrix);
                 renderComet(interfaceData, t_step, &(ball.at(0)), cometShader, m_projectionMatrix, m_viewMatrix);
                 if (drawCometTrajectory) {
                     renderCometTrajectory(interfaceData, cometShader, m_projectionMatrix, m_viewMatrix);
@@ -218,12 +232,12 @@ public:
                     glm::vec3 up(0, 1, 0);
                     m_viewMatrix = glm::lookAt(cameraPos, target, up);
                 }
-                renderOnPlanetScene(interfaceData, advancedShader, minimapShader, minimapTexture, minimapFramebuffer, cup, quad.at(0), m_projectionMatrix, m_viewMatrix);
+                renderOnPlanetScene(interfaceData, normalShader, advancedShader, minimapShader, minimapTexture, minimapFramebuffer, cup, quad.at(0), m_projectionMatrix, m_viewMatrix);
             }
             // Processes input and swaps the window buffer
             m_window.swapBuffers();
         }
-        //destruct();
+        deleteTexture(minimapTexture, minimapFramebuffer);
     }
 
     // In here you can handle key presses
@@ -273,9 +287,11 @@ private:
 
     // Normal Shaders!
     Shader simpleShader;
+    Shader normalShader;
     Shader advancedShader;
     Shader cometShader;
     Shader cometTrailShader;
+    Shader nightSkyShader;
     Shader minimapShader;
     
     std::vector<GPUMesh> ball;
@@ -294,7 +310,9 @@ private:
 
     InterfaceData interfaceData;
 
+    Texture nightSky;
     Texture noise;
+    Texture wallNormal;
     GLuint normalMap;
 
     GLuint minimapTexture;

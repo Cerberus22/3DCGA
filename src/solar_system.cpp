@@ -231,17 +231,38 @@ void renderPlanet(InterfaceData interfaceData, Shader& shader, GPUMesh* ball, Pl
 	glUniform3fv(shader.getUniformLocation("lightPosition"), 1, glm::value_ptr(sunMatrix * glm::vec4(0,0,0,1)));
 	glUniform3fv(shader.getUniformLocation("lightColor"), 1, glm::value_ptr(sun->material.kd));
 
-	glUniform1i(shader.getUniformLocation("hasNormalMap"), planet.hasNormalMap);
 	glUniform1i(shader.getUniformLocation("hasSunTexture"), planet.hasSunTexture);
 	glUniform1i(shader.getUniformLocation("normalMap"), 0);
-	glUniform1f(shader.getUniformLocation("offsetStrength"), interfaceData.normalOffsetStrength);
 	interfaceData.noise->bind(GL_TEXTURE0);
 
 	ball->draw(shader);
 }
 
 // Renders the planets
-void renderSolarSystemScene(InterfaceData interfaceData, Shader& shader, GPUMesh* ball, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
+void renderSolarSystemScene(InterfaceData interfaceData, Shader& shader, Shader& nightSkyShader, GPUMesh* ball, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
+	// Render starry background
+	glDisable(GL_DEPTH_TEST);
+	glDepthMask(GL_FALSE);
+
+	const glm::mat4 modelMatrix = glm::translate(glm::mat4(1), interfaceData.trackball->position());
+	const glm::mat4 mvpMatrix = projectionMatrix * viewMatrix * modelMatrix;
+	const glm::mat3 normalModelMatrix = glm::inverseTranspose(glm::mat3(modelMatrix));
+	
+	nightSkyShader.bind();
+	glUniformMatrix4fv(nightSkyShader.getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+	glUniformMatrix4fv(nightSkyShader.getUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
+	glUniformMatrix3fv(nightSkyShader.getUniformLocation("normalModelMatrix"), 1, GL_FALSE, glm::value_ptr(normalModelMatrix));
+
+	interfaceData.nightSky->bind(GL_TEXTURE0);
+
+	glUniform1i(nightSkyShader.getUniformLocation("minimapTexture"), 0);
+
+	ball->draw(nightSkyShader);
+
+	glEnable(GL_DEPTH_TEST);
+	glDepthMask(GL_TRUE);
+
+	// Render planets
 	for (Planet p : interfaceData.planets) {
 		glEnable(GL_DEPTH_TEST);
 		glDepthMask(GL_TRUE);

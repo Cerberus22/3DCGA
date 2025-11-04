@@ -12,13 +12,14 @@ uniform vec3 lightPosition;
 uniform vec3 lightColor;
 
 uniform sampler2D normalMap;
-uniform bool hasSunTexture;
 
 uniform mat4 mvpMatrix;
 
 in vec3 fragPosition;
 in vec3 fragNormal;
 in vec2 fragTexCoord;
+in vec3 fragTangent;
+in vec3 fragBitangent;
 
 layout(location = 0) out vec4 fragColor;
 
@@ -26,7 +27,14 @@ void main()
 {
     vec3 L = normalize(lightPosition - fragPosition);
     vec3 N = normalize(fragNormal);
+    vec3 T = normalize(fragTangent);
+    vec3 B = normalize(cross(N, T));
+    
+    mat3 TBN = mat3(T, B, N);
+
     vec4 texValue = texture(normalMap, fragTexCoord);
+    vec3 normalValue = ((texValue - 0.5) * 2).xyz;
+    N = normalize(TBN * normalValue);
     
     vec3 R = normalize(reflect(-L, N));
     vec3 V = normalize(cameraPosition - fragPosition);
@@ -41,12 +49,5 @@ void main()
         ) * lightColor * ks;
     }
 
-    if (hasSunTexture) {
-        vec3 darkSunColor = vec3(1, 0.35, 0.0);
-        vec3 lightSunColor = vec3(1, 0.8, 0.0);
-        vec3 outColor = texValue.xyz * lightSunColor + (1 - texValue.xyz) * darkSunColor;
-        fragColor = vec4(ambientCoeff * outColor, 1.0);
-    } else {
-        fragColor = vec4(min(ambientCoeff * kd + diff, 1) + spec, 1);
-    }
+    fragColor = vec4(min(ambientCoeff * kd + diff, 1) + spec, 1);
 }

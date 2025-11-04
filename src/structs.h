@@ -34,10 +34,12 @@ struct InterfaceData {
 	int selectedPlanetIndex;
 	float cometSpeed;
 	Texture* noise;
+	Texture* nightSky;
 	float normalOffsetStrength;
 
 	// On-planet Stuff
 	CupMaterial cupMaterial;
+	Texture* wallNormal;
 
 	glm::vec3 temp = glm::vec3(0);
 };

@@ -10,8 +10,8 @@ float PI = 3.14159;
 
 uniform vec3 cameraPosition;
 
-/*uniform */vec3 lightPosition = vec3(2,2,4);
-/*uniform */vec3 lightColor = vec3(1);
+uniform vec3 lightPosition;
+uniform vec3 lightColor;
 
 in vec3 fragPosition;
 in vec3 fragNormal;
@@ -68,7 +68,7 @@ void main()
 
 	vec3 L2 = 0.17 * (rho * rho / PI) * E0 * cos(theta_i) * (s2 / (s2 + 0.13)) * (1 - cos(phi_i - phi_r) * pow(2 * beta / PI, 2));
 
-	vec3 diff = L1 + L2;
+	vec3 diff = (L1 + L2) * lightColor;
 	
 	vec3 spec = vec3(0);
 
