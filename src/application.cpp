@@ -2,7 +2,7 @@
 #include "texture.h"
 #include "solar_system.h"
 #include "on_planet.h"
-#include "render_normal_map.h"
+#include "maps.h"
 // Always include window first (because it includes glfw, which includes GL which needs to be included AFTER glew).
 // Can't wait for modules to fix this stuff...
 #include <framework/disable_all_warnings.h>
@@ -28,7 +28,7 @@ DISABLE_WARNINGS_POP()
 class Application {
 public:
     Application()
-        : m_window("Final Project", glm::ivec2(1024, 1024), OpenGLVersion::GL41)
+        : m_window("Final Project", glm::ivec2(1800, 900), OpenGLVersion::GL41)
         , m_texture(RESOURCE_ROOT "resources/checkerboard.png")
         , noise(RESOURCE_ROOT "resources/textures/noise.png")
         , trackball(&m_window, glm::radians(45.f))
@@ -50,6 +50,7 @@ public:
         */
 
         ball = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/ball_s.obj");
+        quad = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/quad.obj");
         cup = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/champions.obj");
 
         interfaceData.time = 0.f;
@@ -65,6 +66,9 @@ public:
 
         interfaceData.noise = &noise;
         interfaceData.normalOffsetStrength = 0.4f;
+
+        // Create minimap stuffs
+        createTexture(minimapTexture, minimapFramebuffer);
 
         //normalMap = renderSmoothNormalMap();
 
@@ -104,6 +108,11 @@ public:
             cometTrailShaderBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/comet/vert_comet_trail.glsl");
             cometTrailShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/comet/frag_comet_trail.glsl");
             cometTrailShader = cometTrailShaderBuilder.build();
+
+            ShaderBuilder minimapShaderBuilder;
+            minimapShaderBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/vert_minimap.glsl");
+            minimapShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/frag_minimap.glsl");
+            minimapShader = minimapShaderBuilder.build();
 
         } catch (ShaderLoadingException e) {
             std::cerr << e.what() << std::endl;
@@ -178,6 +187,7 @@ public:
                 ImGui::ColorEdit3("Diffuse", glm::value_ptr(interfaceData.cupMaterial.m.kd));
                 ImGui::SliderFloat("Rho (Albedo)", &interfaceData.cupMaterial.rho, 0, 1, "%.2f");
                 ImGui::SliderFloat("Sigma (Rough)", &interfaceData.cupMaterial.sigma, 0, 1, "%.2f");
+                ImGui::DragFloat3("Temp", glm::value_ptr(interfaceData.temp), 0.1, -10, 10);
             }
 
             ImGui::End();
@@ -208,7 +218,7 @@ public:
                     glm::vec3 up(0, 1, 0);
                     m_viewMatrix = glm::lookAt(cameraPos, target, up);
                 }
-                renderOnPlanetScene(interfaceData, advancedShader, cup, m_projectionMatrix, m_viewMatrix);
+                renderOnPlanetScene(interfaceData, advancedShader, minimapShader, minimapTexture, minimapFramebuffer, cup, quad.at(0), m_projectionMatrix, m_viewMatrix);
             }
             // Processes input and swaps the window buffer
             m_window.swapBuffers();
@@ -266,10 +276,11 @@ private:
     Shader advancedShader;
     Shader cometShader;
     Shader cometTrailShader;
+    Shader minimapShader;
     
-    std::vector<GPUMesh>* m_meshes;
     std::vector<GPUMesh> ball;
     std::vector<GPUMesh> cup;
+    std::vector<GPUMesh> quad;
 
     Texture m_texture;
     bool m_useMaterial { true };
@@ -285,6 +296,9 @@ private:
 
     Texture noise;
     GLuint normalMap;
+
+    GLuint minimapTexture;
+    GLuint minimapFramebuffer;
 
     float t_step;
 

@@ -3,4 +3,4 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <framework/shader.h>
 
-void renderOnPlanetScene(InterfaceData interfaceData, Shader& shader, std::vector<GPUMesh>& cup, glm::mat4 projectionMatrix, glm::mat4 viewMatrix);
+void renderOnPlanetScene(InterfaceData interfaceData, Shader& shader, Shader& minimapShader, GLuint& minimapTexture, GLuint& minimapFramebuffer, std::vector<GPUMesh>& cup, GPUMesh& quad, glm::mat4 projectionMatrix, glm::mat4 viewMatrix);

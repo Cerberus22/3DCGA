@@ -3,6 +3,7 @@
 uniform vec3 kd;
 uniform float rho;	 // albedo
 uniform float sigma; // roughness
+uniform float ambientCoeff;
 // uniform float transparency;
 
 float PI = 3.14159;
@@ -71,5 +72,5 @@ void main()
 	
 	vec3 spec = vec3(0);
 
-	fragColor = vec4(diff, 1);
+	fragColor = vec4(ambientCoeff * kd + diff, 1);
 }

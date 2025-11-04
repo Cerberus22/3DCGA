@@ -38,6 +38,8 @@ struct InterfaceData {
 
 	// On-planet Stuff
 	CupMaterial cupMaterial;
+
+	glm::vec3 temp = glm::vec3(0);
 };
 
 struct BezierSegment {
