@@ -91,6 +91,8 @@ public:
         data.textures.minimapTexture = minimapTexture;
         data.framebuffers.minimapFramebuffer = minimapFramebuffer;
 
+        createBuffers();
+
         try {
             // Any new shaders can be added below in similar fashion.
             // ==> Don't forget to reconfigure CMake when you do!
@@ -282,6 +284,7 @@ public:
             m_window.swapBuffers();
         }
         deleteTexture(minimapTexture, minimapFramebuffer);
+        destroyBuffers();
     }
 
     // In here you can handle key presses

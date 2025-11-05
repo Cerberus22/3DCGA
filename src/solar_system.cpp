@@ -358,12 +358,54 @@ void renderComet(Data& data, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
     ball->draw(cometShader);
 }
 
+GLuint trajVao, trajVbo;
+std::vector<glm::vec3> trajectoryPoints;
+
+GLuint vao, vboPos, vboAlpha;
+std::vector<float> alphas;
+
+void createBuffers() {
+	glGenVertexArrays(1, &trajVao);
+	glGenBuffers(1, &trajVbo);
+
+	glBindVertexArray(trajVao);
+	glBindBuffer(GL_ARRAY_BUFFER, trajVbo);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+
+
+	glGenVertexArrays(1, &vao);
+	glGenBuffers(1, &vboPos);
+	glGenBuffers(1, &vboAlpha);
+
+	glBindVertexArray(vao);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vboPos);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vboAlpha);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(float), (void*)0);
+}
+
+void destroyBuffers() {
+	glDeleteBuffers(1, &vboPos);
+	glDeleteBuffers(1, &vboAlpha);
+	glDeleteVertexArrays(1, &vao);
+
+	glDeleteBuffers(1, &trajVbo);
+	glDeleteVertexArrays(1, &trajVao);
+}
+
+
 // Renders the trajectory (Bezier curve) of the comet
 void renderCometTrajectory(Data& data, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
 	const Shader& shader = *data.shaders.cometShader;
 	
 	// Sample points along the entire path
-    std::vector<glm::vec3> trajectoryPoints;
+	trajectoryPoints.clear();
     const int samplesPerSegment = 40;
     for (const auto& segment : cometPath) {
         for (int i = 0; i <= samplesPerSegment; ++i) {
@@ -378,23 +420,11 @@ void renderCometTrajectory(Data& data, glm::mat4 projectionMatrix, glm::mat4 vie
     glUniformMatrix4fv(shader.getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvp));
 	glUniform3fv(shader.getUniformLocation("emissiveColor"), 1, glm::value_ptr(glm::vec3(0.0f, 0.2f, 0.1f)));
 
-    GLuint vao, vbo;
-    glGenVertexArrays(1, &vao);
-    glGenBuffers(1, &vbo);
-
-    glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, trajectoryPoints.size() * sizeof(glm::vec3), trajectoryPoints.data(), GL_STATIC_DRAW);
-
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+	glBindVertexArray(trajVao);
+	glBindBuffer(GL_ARRAY_BUFFER, trajVbo);
+	glBufferData(GL_ARRAY_BUFFER, trajectoryPoints.size() * sizeof(glm::vec3), trajectoryPoints.data(), GL_STATIC_DRAW);
 
     glDrawArrays(GL_LINE_STRIP, 0, trajectoryPoints.size());
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-    glDeleteBuffers(1, &vbo);
-    glDeleteVertexArrays(1, &vao);
 }
 
 // Renders the fading comet trail
@@ -404,7 +434,7 @@ void renderCometTrail(Data& data, glm::mat4 projectionMatrix, glm::mat4 viewMatr
 	if (cometTrail.size() < 2) return;
 
     // Compute fading alphas
-    std::vector<float> alphas;
+	alphas.clear();
     alphas.reserve(cometTrail.size());
     for (size_t i = 0; i < cometTrail.size(); ++i) {
         float t = (float)i / (float)(cometTrail.size() - 1);
@@ -419,28 +449,15 @@ void renderCometTrail(Data& data, glm::mat4 projectionMatrix, glm::mat4 viewMatr
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    GLuint vao, vboPos, vboAlpha;
-    glGenVertexArrays(1, &vao);
-    glGenBuffers(1, &vboPos);
-    glGenBuffers(1, &vboAlpha);
-
     glBindVertexArray(vao);
+	glBindBuffer(GL_ARRAY_BUFFER, vboPos);
+	glBufferData(GL_ARRAY_BUFFER, cometTrail.size() * sizeof(glm::vec3), cometTrail.data(), GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ARRAY_BUFFER, vboPos);
-    glBufferData(GL_ARRAY_BUFFER, cometTrail.size() * sizeof(glm::vec3), cometTrail.data(), GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
-
-    glBindBuffer(GL_ARRAY_BUFFER, vboAlpha);
-    glBufferData(GL_ARRAY_BUFFER, alphas.size() * sizeof(float), alphas.data(), GL_STATIC_DRAW);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(float), (void*)0);
+	glBindBuffer(GL_ARRAY_BUFFER, vboAlpha);
+	glBufferData(GL_ARRAY_BUFFER, alphas.size() * sizeof(float), alphas.data(), GL_STATIC_DRAW);
 
     glDrawArrays(GL_LINE_STRIP, 0, cometTrail.size());
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
-    glDeleteBuffers(1, &vboPos);
-    glDeleteBuffers(1, &vboAlpha);
-    glDeleteVertexArrays(1, &vao);
 }
