@@ -74,22 +74,16 @@ public:
         interfaceData.wallNormal = &wallNormal;
         interfaceData.normalOffsetStrength = 0.4f;
 
+        interfaceData.dayNightCycle = true;
+        interfaceData.dayColor = glm::vec3(1, 0.8, 0.8);
+	    interfaceData.nightColor = glm::vec3(0.6, 0.6, 1);
+
         // Create minimap stuffs
         createTexture(minimapTexture, minimapFramebuffer);
 
         //normalMap = renderSmoothNormalMap();
 
         try {
-            ShaderBuilder defaultBuilder;
-            defaultBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/shader_vert.glsl");
-            defaultBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/shader_frag.glsl");
-            m_defaultShader = defaultBuilder.build();
-
-            ShaderBuilder shadowBuilder;
-            shadowBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/shadow_vert.glsl");
-            shadowBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/shadow_frag.glsl");
-            m_shadowShader = shadowBuilder.build();
-
             // Any new shaders can be added below in similar fashion.
             // ==> Don't forget to reconfigure CMake when you do!
             //     Visual Studio: PROJECT => Generate Cache for ComputerGraphics
@@ -137,8 +131,6 @@ public:
     }
 
     void renderSolarSystemGUI() {
-        ImGui::SliderFloat("Time Speed", &t_step, 0.f, 1.f, "%.3f");
-
         // Display planets in scene
         std::vector<std::string> planetNames = {};
         for (Planet planet: interfaceData.planets) {
@@ -196,6 +188,8 @@ public:
                 ImGui::Begin("Assignment 2");
 
                 ImGui::Combo("Scene", &sceneNr, scenes, 2);
+                ImGui::SliderFloat("Time Speed", &t_step, 0.f, 1.f, "%.3f");
+                ImGui::Separator();
 
                 if (sceneNr == 0) {
                     renderSolarSystemGUI();
@@ -205,7 +199,9 @@ public:
                     ImGui::ColorEdit3("Diffuse", glm::value_ptr(interfaceData.cupMaterial.m.kd));
                     ImGui::SliderFloat("Rho (Albedo)", &interfaceData.cupMaterial.rho, 0, 1, "%.2f");
                     ImGui::SliderFloat("Sigma (Rough)", &interfaceData.cupMaterial.sigma, 0, 1, "%.2f");
-                    ImGui::DragFloat3("Temp", glm::value_ptr(interfaceData.temp), 0.1, -10, 10);
+                    ImGui::Checkbox("Day/night cycle", &interfaceData.dayNightCycle);
+                    ImGui::ColorEdit3("Daylight color", glm::value_ptr(interfaceData.dayColor));
+                    ImGui::ColorEdit3("Nightlight color", glm::value_ptr(interfaceData.nightColor));
                 }
 
                 ImGui::End();

@@ -33,49 +33,69 @@ std::vector<glm::vec3> computeTangents(std::vector<Vertex> vertices, std::vector
 	return tangents;
 }
 
-void renderOnPlanetScene(InterfaceData interfaceData, Shader& simpleShader, Shader& advancedShader, Shader& minimapShader, GLuint& minimapTexture, GLuint& minimapFramebuffer, std::vector<GPUMesh>& cup, GPUMesh& quad, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
+void shadeOnPlanetScene(InterfaceData interfaceData, Shader& shader, GPUMesh& mesh, int i, glm::mat4 modelMatrix, glm::mat4 mvpMatrix, std::vector<glm::vec3> tangents) {
+	glm::mat3 normalModelMatrix = glm::inverseTranspose(glm::mat3(modelMatrix));
+
+	glm::mat4 lightMatrix = glm::rotate(glm::mat4(1), (interfaceData.time * 3), glm::vec3(1, 0, 0));
+	glm::vec3 light1Position = glm::vec3(lightMatrix * glm::vec4(0, 4, 2, 1));
+	glm::vec3 light2Position = glm::vec3(lightMatrix * glm::vec4(0, -4, -2, 1));
+	
+	shader.bind();
+
+	glUniformMatrix4fv(shader.getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+	glUniformMatrix4fv(shader.getUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
+	glUniformMatrix3fv(shader.getUniformLocation("normalModelMatrix"), 1, GL_FALSE, glm::value_ptr(normalModelMatrix));
+
+	glUniform3fv(shader.getUniformLocation("kd"), 1, glm::value_ptr(interfaceData.cupMaterial.m.kd));
+	glUniform1f(shader.getUniformLocation("ambientCoeff"), 0);
+
+	glUniform3fv(shader.getUniformLocation("cameraPosition"), 1, glm::value_ptr(interfaceData.trackball->position()));
+
+	if (interfaceData.dayNightCycle) {
+		glUniform3fv(shader.getUniformLocation("light1Position"), 1, glm::value_ptr(light1Position));
+		glUniform3fv(shader.getUniformLocation("light1Color"), 1, glm::value_ptr(interfaceData.dayColor));
+
+		glUniform3fv(shader.getUniformLocation("light2Position"), 1, glm::value_ptr(light2Position));
+		glUniform3fv(shader.getUniformLocation("light2Color"), 1, glm::value_ptr(interfaceData.nightColor));
+	} else {
+		glUniform3fv(shader.getUniformLocation("light1Position"), 1, glm::value_ptr(glm::vec3(0, 4, 2)));
+		glUniform3fv(shader.getUniformLocation("light1Color"), 1, glm::value_ptr(interfaceData.dayColor));
+
+		glUniform3fv(shader.getUniformLocation("light2Position"), 1, glm::value_ptr(glm::vec3(0, 4, 2)));
+		glUniform3fv(shader.getUniformLocation("light2Color"), 1, glm::value_ptr(glm::vec3(0)));
+	}
+
+	if (i > 3) {
+		glUniform3fv(shader.getUniformLocation("ks"), 1, glm::value_ptr(interfaceData.cupMaterial.m.ks));
+		glUniform1f(shader.getUniformLocation("shininess"), interfaceData.cupMaterial.m.shininess);
+
+		glUniform3fv(shader.getUniformLocation("tangent"), 1, glm::value_ptr(tangents.at(0)));
+
+		glUniform1i(shader.getUniformLocation("normalMap"), 0);
+		interfaceData.wallNormal->bind(GL_TEXTURE0);
+	} else {
+		glUniform1f(shader.getUniformLocation("rho"), interfaceData.cupMaterial.rho);
+		glUniform1f(shader.getUniformLocation("sigma"), interfaceData.cupMaterial.sigma);
+	}
+
+	mesh.draw(shader);
+}
+
+void renderOnPlanetScene(InterfaceData interfaceData, Shader& normalShader, Shader& advancedShader, Shader& minimapShader, GLuint& minimapTexture, GLuint& minimapFramebuffer, std::vector<GPUMesh>& cup, GPUMesh& quad, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
 	std::vector<glm::vec3> tangents = computeTangents(cup.at(4).vertices, cup.at(4).triangles);
 
 	glm::mat4 modelMatrix = glm::mat4(1);
 	glm::mat4 mvpMatrix = projectionMatrix * viewMatrix * modelMatrix;
-	// Normals should be transformed differently than positions (ignoring translations + dealing with scaling):
-	// https://paroj.github.io/gltut/Illumination/Tut09%20Normal%20Transformation.html
-	glm::mat3 normalModelMatrix = glm::inverseTranspose(glm::mat3(modelMatrix));
+
 	Shader* shader;
 
 	// Render scene
 	for (int i = 0; i < cup.size(); i++) {
 		GPUMesh& mesh = cup.at(i);
-		if (i > 3) shader = &simpleShader;
+		if (i == 4) shader = &normalShader;
 		else shader = &advancedShader;
 
-		shader->bind();
-		glUniformMatrix4fv(shader->getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvpMatrix));
-		glUniformMatrix4fv(shader->getUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
-		glUniformMatrix3fv(shader->getUniformLocation("normalModelMatrix"), 1, GL_FALSE, glm::value_ptr(normalModelMatrix));
-
-		glUniform3fv(shader->getUniformLocation("kd"), 1, glm::value_ptr(interfaceData.cupMaterial.m.kd));
-		glUniform1f(shader->getUniformLocation("ambientCoeff"), 0);
-
-		glUniform3fv(shader->getUniformLocation("cameraPosition"), 1, glm::value_ptr(interfaceData.trackball->position()));
-
-		glUniform3fv(shader->getUniformLocation("lightPosition"), 1, glm::value_ptr(glm::vec3(0, 4, 2)));
-		glUniform3fv(shader->getUniformLocation("lightColor"), 1, glm::value_ptr(glm::vec3(1)));
-
-		if (i > 3) {
-			glUniform3fv(shader->getUniformLocation("ks"), 1, glm::value_ptr(interfaceData.cupMaterial.m.ks));
-			glUniform1f(shader->getUniformLocation("shininess"), interfaceData.cupMaterial.m.shininess);
-
-			glUniform3fv(shader->getUniformLocation("tangent"), 1, glm::value_ptr(tangents.at(0)));
-
-			glUniform1i(shader->getUniformLocation("normalMap"), 0);
-			interfaceData.wallNormal->bind(GL_TEXTURE0);
-		} else {
-			glUniform1f(shader->getUniformLocation("rho"), interfaceData.cupMaterial.rho);
-			glUniform1f(shader->getUniformLocation("sigma"), interfaceData.cupMaterial.sigma);
-		}
-
-		mesh.draw(*shader);
+		shadeOnPlanetScene(interfaceData, *shader, mesh, i, modelMatrix, mvpMatrix, tangents);
 	}
 
 	// Render minimap texture
@@ -92,37 +112,10 @@ void renderOnPlanetScene(InterfaceData interfaceData, Shader& simpleShader, Shad
 
 	for (int i = 0; i < cup.size(); i++) {
 		GPUMesh& mesh = cup.at(i);
-		if (i > 3) shader = &simpleShader;
+		if (i == 4) shader = &normalShader;
 		else shader = &advancedShader;
 
-		shader->bind();
-		glUniformMatrix4fv(shader->getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvpMatrix));
-		glUniformMatrix4fv(shader->getUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
-		glUniformMatrix3fv(shader->getUniformLocation("normalModelMatrix"), 1, GL_FALSE, glm::value_ptr(normalModelMatrix));
-
-		glUniform3fv(shader->getUniformLocation("kd"), 1, glm::value_ptr(interfaceData.cupMaterial.m.kd));
-		glUniform1f(shader->getUniformLocation("ambientCoeff"), 0);
-
-		glUniform3fv(shader->getUniformLocation("cameraPosition"), 1, glm::value_ptr(interfaceData.trackball->position()));
-
-		glUniform3fv(shader->getUniformLocation("lightPosition"), 1, glm::value_ptr(glm::vec3(0, 4, 2)));
-		glUniform3fv(shader->getUniformLocation("lightColor"), 1, glm::value_ptr(glm::vec3(1)));
-
-		if (i > 3) {
-			glUniform3fv(shader->getUniformLocation("ks"), 1, glm::value_ptr(interfaceData.cupMaterial.m.ks));
-			glUniform1f(shader->getUniformLocation("shininess"), interfaceData.cupMaterial.m.shininess);
-
-			glUniform3fv(shader->getUniformLocation("tangent"), 1, glm::value_ptr(tangents.at(0)));
-
-			glUniform1i(shader->getUniformLocation("normalMap"), 0);
-			interfaceData.wallNormal->bind(GL_TEXTURE0);
-		}
-		else {
-			glUniform1f(shader->getUniformLocation("rho"), interfaceData.cupMaterial.rho);
-			glUniform1f(shader->getUniformLocation("sigma"), interfaceData.cupMaterial.sigma);
-		}
-
-		mesh.draw(*shader);
+		shadeOnPlanetScene(interfaceData, *shader, mesh, i, modelMatrix, mvpMatrix, tangents);
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, 1800, 900);
@@ -132,7 +125,7 @@ void renderOnPlanetScene(InterfaceData interfaceData, Shader& simpleShader, Shad
 	modelMatrix = glm::translate(glm::mat4(1), glm::vec3(0.8, -0.7, 0)) 
 				* glm::rotate(glm::mat4(1), glm::pi<float>()/2, glm::vec3(1,0,0))
 				* glm::scale(glm::mat4(1), glm::vec3(0.125, 0.25, 0.25));
-	normalModelMatrix = glm::inverseTranspose(glm::mat3(modelMatrix));
+	glm::mat4 normalModelMatrix = glm::inverseTranspose(glm::mat3(modelMatrix));
 
 	// Skip viewMatrix to make quad fixed on screen
 	mvpMatrix = modelMatrix;

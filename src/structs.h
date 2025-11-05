@@ -41,7 +41,9 @@ struct InterfaceData {
 	CupMaterial cupMaterial;
 	Texture* wallNormal;
 
-	glm::vec3 temp = glm::vec3(0);
+	bool dayNightCycle;
+	glm::vec3 dayColor;
+	glm::vec3 nightColor;
 };
 
 struct BezierSegment {
