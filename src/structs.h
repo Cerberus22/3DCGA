@@ -23,6 +23,14 @@ struct CupMaterial {
 	float sigma;
 };
 
+struct OceanData {
+	float amplitude;
+	float fx;	// x frequency
+	float fz;	// z frequency
+	float ft;	// t frequency
+	bool doSubdivide = false;
+};
+
 /*
 	This struct can be used for passing interface stuff to the actual shaders.
 */
@@ -48,6 +56,9 @@ struct InterfaceData {
 	bool dayNightCycle;
 	glm::vec3 dayColor;
 	glm::vec3 nightColor;
+
+	// Ocean stuff
+	OceanData oceanData;
 };
 
 struct BezierSegment {
