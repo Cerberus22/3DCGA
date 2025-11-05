@@ -43,6 +43,7 @@ struct InterfaceData {
 	Texture* wallNormal;
 	bool useNormalMap;
 	bool shadeCupSimple;
+	bool drawMinimap;
 
 	bool dayNightCycle;
 	glm::vec3 dayColor;

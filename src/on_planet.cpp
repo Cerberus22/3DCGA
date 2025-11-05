@@ -142,5 +142,7 @@ void renderOnPlanetScene(InterfaceData interfaceData, Shader& normalShader, Shad
 
 	glUniform1i(minimapShader.getUniformLocation("minimapTexture"), 0);
 	
-	quad.draw(minimapShader);
+	if (interfaceData.drawMinimap) {
+		quad.draw(minimapShader);
+	}
 }
