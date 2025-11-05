@@ -80,7 +80,7 @@ void main()
 		
 		float C3 = 0.125 * (s2 / (s2 + 0.09)) * pow(4 * alpha * beta / (PI * PI), 2);
 
-		vec3 L1 = (rho / PI) * E0 * cos(theta_i) * 
+		vec3 L1 = (rho / PI) * E0 * clamp(cos(theta_i), 0, 1) * 
 			(C1 + C2 * cos(phi_i - phi_r) * clamp(tan(beta),-10,10) + C3 * (1 - abs(cos(phi_i - phi_r))) * clamp(tan((alpha + beta) / 2),-10,10));
 
 		vec3 L2 = 0.17 * (rho * rho / PI) * E0 * cos(theta_i) * (s2 / (s2 + 0.13)) * (1 - cos(phi_i - phi_r) * pow(2 * beta / PI, 2));
