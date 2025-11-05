@@ -64,7 +64,13 @@ void shadeOnPlanetScene(InterfaceData interfaceData, Shader& shader, GPUMesh& me
 		glUniform3fv(shader.getUniformLocation("light2Color"), 1, glm::value_ptr(glm::vec3(0)));
 	}
 
-	if (i > 3 || interfaceData.shadeCupSimple) {
+	if (i != 4 && interfaceData.useAdvancedShading) {
+		glUniform3fv(shader.getUniformLocation("kd"), 1, glm::value_ptr(interfaceData.cupMaterial.m.kd));
+		glUniform1f(shader.getUniformLocation("rho"), interfaceData.cupMaterial.rho);
+		glUniform1f(shader.getUniformLocation("sigma"), interfaceData.cupMaterial.sigma);
+		
+		interfaceData.wallNormal->bind(GL_TEXTURE0);
+	} else {
 		glUniform3fv(shader.getUniformLocation("kd"), 1, glm::value_ptr(interfaceData.cupMaterial.floorKd));
 		glUniform3fv(shader.getUniformLocation("ks"), 1, glm::value_ptr(interfaceData.cupMaterial.m.ks));
 		glUniform1f(shader.getUniformLocation("shininess"), interfaceData.cupMaterial.m.shininess);
@@ -73,11 +79,6 @@ void shadeOnPlanetScene(InterfaceData interfaceData, Shader& shader, GPUMesh& me
 
 		glUniform1i(shader.getUniformLocation("useNormalMap"), interfaceData.useNormalMap);
 		glUniform1i(shader.getUniformLocation("normalMap"), 0);
-		interfaceData.wallNormal->bind(GL_TEXTURE0);
-	} else {
-		glUniform3fv(shader.getUniformLocation("kd"), 1, glm::value_ptr(interfaceData.cupMaterial.m.kd));
-		glUniform1f(shader.getUniformLocation("rho"), interfaceData.cupMaterial.rho);
-		glUniform1f(shader.getUniformLocation("sigma"), interfaceData.cupMaterial.sigma);
 	}
 
 	mesh.draw(shader);
@@ -94,8 +95,8 @@ void renderOnPlanetScene(InterfaceData interfaceData, Shader& normalShader, Shad
 	// Render scene
 	for (int i = 0; i < cup.size(); i++) {
 		GPUMesh& mesh = cup.at(i);
-		if (i == 4 || interfaceData.shadeCupSimple) shader = &normalShader;
-		else shader = &advancedShader;
+		if (i != 4 && interfaceData.useAdvancedShading) shader = &advancedShader;
+		else shader = &normalShader;
 
 		shadeOnPlanetScene(interfaceData, *shader, mesh, i, modelMatrix, mvpMatrix, tangents);
 	}
@@ -114,8 +115,8 @@ void renderOnPlanetScene(InterfaceData interfaceData, Shader& normalShader, Shad
 
 	for (int i = 0; i < cup.size(); i++) {
 		GPUMesh& mesh = cup.at(i);
-		if (i == 4 || interfaceData.shadeCupSimple) shader = &normalShader;
-		else shader = &advancedShader;
+		if (i != 4 && interfaceData.useAdvancedShading) shader = &advancedShader;
+		else shader = &normalShader;
 
 		shadeOnPlanetScene(interfaceData, *shader, mesh, i, modelMatrix, mvpMatrix, tangents);
 	}
@@ -140,7 +141,7 @@ void renderOnPlanetScene(InterfaceData interfaceData, Shader& normalShader, Shad
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, minimapTexture);
 
-	glUniform1i(minimapShader.getUniformLocation("minimapTexture"), 0);
+	glUniform1i(minimapShader.getUniformLocation("tex"), 0);
 	
 	if (interfaceData.drawMinimap) {
 		quad.draw(minimapShader);

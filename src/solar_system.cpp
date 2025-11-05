@@ -240,27 +240,29 @@ void renderPlanet(InterfaceData interfaceData, Shader& shader, GPUMesh* ball, Pl
 
 // Renders the planets
 void renderSolarSystemScene(InterfaceData interfaceData, Shader& shader, Shader& nightSkyShader, GPUMesh* ball, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
-	// Render starry background
-	glDisable(GL_DEPTH_TEST);
-	glDepthMask(GL_FALSE);
-
 	const glm::mat4 modelMatrix = glm::translate(glm::mat4(1), interfaceData.trackball->position());
 	const glm::mat4 mvpMatrix = projectionMatrix * viewMatrix * modelMatrix;
 	const glm::mat3 normalModelMatrix = glm::inverseTranspose(glm::mat3(modelMatrix));
-	
-	nightSkyShader.bind();
-	glUniformMatrix4fv(nightSkyShader.getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvpMatrix));
-	glUniformMatrix4fv(nightSkyShader.getUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
-	glUniformMatrix3fv(nightSkyShader.getUniformLocation("normalModelMatrix"), 1, GL_FALSE, glm::value_ptr(normalModelMatrix));
 
-	interfaceData.nightSky->bind(GL_TEXTURE0);
+	if (interfaceData.useEnvironmentMap) {
+		// Render starry background
+		glDisable(GL_DEPTH_TEST);
+		glDepthMask(GL_FALSE);
 
-	glUniform1i(nightSkyShader.getUniformLocation("minimapTexture"), 0);
+		nightSkyShader.bind();
+		glUniformMatrix4fv(nightSkyShader.getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+		glUniformMatrix4fv(nightSkyShader.getUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
+		glUniformMatrix3fv(nightSkyShader.getUniformLocation("normalModelMatrix"), 1, GL_FALSE, glm::value_ptr(normalModelMatrix));
 
-	ball->draw(nightSkyShader);
+		interfaceData.nightSky->bind(GL_TEXTURE0);
 
-	glEnable(GL_DEPTH_TEST);
-	glDepthMask(GL_TRUE);
+		glUniform1i(nightSkyShader.getUniformLocation("tex"), 0);
+
+		ball->draw(nightSkyShader);
+
+		glEnable(GL_DEPTH_TEST);
+		glDepthMask(GL_TRUE);
+	}
 
 	// Render planets
 	for (Planet p : interfaceData.planets) {
@@ -275,7 +277,6 @@ void renderSolarSystemScene(InterfaceData interfaceData, Shader& shader, Shader&
 	}
 }
 
-
 // -------------------------------------------- COMET --------------------------------------------
 
 glm::vec3 evaluateCubicBezier(const BezierSegment& seg, float t) {
@@ -283,9 +284,12 @@ glm::vec3 evaluateCubicBezier(const BezierSegment& seg, float t) {
     return u*u*u*seg.p0 + 3*u*u*t*seg.p1 + 3*u*t*t*seg.p2 + t*t*t*seg.p3;
 }
 
-std::vector<glm::vec3> cometTrail;
-const int maxTrailPoints = 30;
 float cometPathProgress = 0;
+
+std::vector<glm::vec3> cometTrail;
+static float accumulatedDistance = 0.0f;
+static glm::vec3 lastCometPos = glm::vec3(0);
+
 glm::vec3 offset = glm::vec3(2.5f, 2.5f, 0);
 
 std::vector<BezierSegment> cometPath = {
@@ -299,7 +303,7 @@ std::vector<BezierSegment> cometPath = {
 void renderComet(InterfaceData interfaceData, float deltaTime, GPUMesh* ballMesh, Shader& cometShader, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
 	int numSegments = (int)cometPath.size();
 
-	cometPathProgress += interfaceData.cometSpeed * deltaTime;
+	cometPathProgress += 0.02 * deltaTime;
     if (cometPathProgress > 1) cometPathProgress -= 1;
     
     int currentSegmentIndex = std::floor(cometPathProgress * numSegments);
@@ -308,11 +312,34 @@ void renderComet(InterfaceData interfaceData, float deltaTime, GPUMesh* ballMesh
 	float posAlongSegment = (cometPathProgress * numSegments) - currentSegmentIndex;
     glm::vec3 cometPos = evaluateCubicBezier(cometPath[currentSegmentIndex], posAlongSegment);
 
-	cometTrail.push_back(cometPos);
-	if (cometTrail.size() > maxTrailPoints)
-		cometTrail.erase(cometTrail.begin());
+	// Adding data to comet trail
+	if (cometTrail.empty()) {
+		cometTrail.push_back(cometPos);
+		lastCometPos = cometPos;
+	}
 
-    glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), cometPos) * glm::scale(glm::mat4(1.0f), glm::vec3(0.01f));
+	float distance = glm::length(cometPos - lastCometPos);
+	accumulatedDistance += distance;
+
+	// only add new point if comet moved enough distance
+	if (accumulatedDistance >= 0.1f) {
+		cometTrail.push_back(cometPos);
+		lastCometPos = cometPos;
+		accumulatedDistance = 0.0f;
+	}
+
+	// compute total trail length and remove oldest points if needed
+	float totalLength = 0.0f;
+	for (int i = cometTrail.size() - 1; i > 0; i--) {
+		totalLength += glm::length(cometTrail[i] - cometTrail[i - 1]);
+		if (totalLength > interfaceData.cometTrailLength) {
+			cometTrail.erase(cometTrail.begin(), cometTrail.begin() + i - 1);
+			break;
+		}
+	}
+
+	// Comet itself
+	glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), cometPos) * glm::scale(glm::mat4(1.0f), glm::vec3(0.01f));
     glm::mat4 mvp = projectionMatrix * viewMatrix * modelMatrix;
 
     cometShader.bind();

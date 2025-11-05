@@ -41,16 +41,16 @@ struct InterfaceData {
 	std::vector<Planet> planets;
 	float time;
 	int selectedPlanetIndex;
-	float cometSpeed;
 	Texture* noise;
 	Texture* nightSky;
-	float normalOffsetStrength;
+	bool useEnvironmentMap;
+	float cometTrailLength;
 
 	// On-planet Stuff
 	CupMaterial cupMaterial;
 	Texture* wallNormal;
 	bool useNormalMap;
-	bool shadeCupSimple;
+	bool useAdvancedShading;
 	bool drawMinimap;
 
 	bool dayNightCycle;

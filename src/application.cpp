@@ -65,7 +65,7 @@ public:
         interfaceData.planets = populatePlanets();
         interfaceData.trackball = &trackball;
         interfaceData.selectedPlanetIndex = 0;
-        interfaceData.cometSpeed = 0.05f;
+        interfaceData.cometTrailLength = 5.0f;
 
         interfaceData.cupMaterial.rho = 1.f;
         interfaceData.cupMaterial.sigma = 0.f;
@@ -74,8 +74,8 @@ public:
 
         interfaceData.noise = &noise;
         interfaceData.nightSky = &nightSky;
+        interfaceData.useEnvironmentMap = true;
         interfaceData.wallNormal = &wallNormal;
-        interfaceData.normalOffsetStrength = 0.4f;
 
         interfaceData.dayNightCycle = true;
         interfaceData.dayColor = glm::vec3(1, 0.8, 0.8);
@@ -166,13 +166,14 @@ public:
         ImGui::ColorEdit3("Specular", glm::value_ptr(p.material.ks));
         ImGui::DragFloat("Shininess", &p.material.shininess, 0.1f, 0.1f, 10.0f, "%.2f");
         ImGui::SliderFloat("Ambient coeff.", &p.ambientCoeff, 0.f, 1.f, "%.1f");
-        ImGui::Checkbox("Noise", &p.hasNormalMap);
-        ImGui::SliderFloat("Normal offset", &interfaceData.normalOffsetStrength, 0.f, 1.f, "%.2f");
 
         ImGui::Separator();
         ImGui::Text("Comet (Bezier curve)");
         ImGui::Checkbox("Draw comet trajectory", &drawCometTrajectory);
-        ImGui::DragFloat("Comet speed", &interfaceData.cometSpeed, 0.05f, 0.0f, 0.2f, "%.05f");
+        ImGui::SliderFloat("Comet trail length", &interfaceData.cometTrailLength, 0.f, 10.f, "%.1f");
+
+        ImGui::Separator();
+        ImGui::Checkbox("Environment map", &interfaceData.useEnvironmentMap);
     }
 
     void update()
@@ -211,7 +212,7 @@ public:
                     ImGui::ColorEdit3("Floor", glm::value_ptr(interfaceData.cupMaterial.floorKd));
 
                     ImGui::Checkbox("Normal map", &interfaceData.useNormalMap);
-                    ImGui::Checkbox("Simple shade", &interfaceData.shadeCupSimple);
+                    ImGui::Checkbox("Advanced shading", &interfaceData.useAdvancedShading);
                     ImGui::Checkbox("Minimap", &interfaceData.drawMinimap);
 
                     ImGui::SliderFloat("Rho (Albedo)", &interfaceData.cupMaterial.rho, 0, 1, "%.2f");

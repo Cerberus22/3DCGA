@@ -17,8 +17,6 @@ uniform vec3 light2Color;
 uniform sampler2D normalMap;
 uniform bool useNormalMap;
 
-uniform mat4 mvpMatrix;
-
 in vec3 fragPosition;
 in vec3 fragNormal;
 in vec2 fragTexCoord;
