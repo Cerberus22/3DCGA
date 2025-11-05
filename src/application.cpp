@@ -197,6 +197,11 @@ public:
                 else {
                     ImGui::Combo("Viewpoint", &selectedViewpoint, viewpoints, 2);
                     ImGui::ColorEdit3("Diffuse", glm::value_ptr(interfaceData.cupMaterial.m.kd));
+                    ImGui::ColorEdit3("Floor", glm::value_ptr(interfaceData.cupMaterial.floorKd));
+
+                    ImGui::Checkbox("Normal map", &interfaceData.useNormalMap);
+                    ImGui::Checkbox("Simple shade", &interfaceData.shadeCupSimple);
+
                     ImGui::SliderFloat("Rho (Albedo)", &interfaceData.cupMaterial.rho, 0, 1, "%.2f");
                     ImGui::SliderFloat("Sigma (Rough)", &interfaceData.cupMaterial.sigma, 0, 1, "%.2f");
                     ImGui::Checkbox("Day/night cycle", &interfaceData.dayNightCycle);

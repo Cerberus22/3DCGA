@@ -18,6 +18,7 @@ struct Planet {
 
 struct CupMaterial {
 	Material m;
+	glm::vec3 floorKd;
 	float rho;
 	float sigma;
 };
@@ -40,6 +41,8 @@ struct InterfaceData {
 	// On-planet Stuff
 	CupMaterial cupMaterial;
 	Texture* wallNormal;
+	bool useNormalMap;
+	bool shadeCupSimple;
 
 	bool dayNightCycle;
 	glm::vec3 dayColor;

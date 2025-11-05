@@ -15,6 +15,7 @@ uniform vec3 light2Position;
 uniform vec3 light2Color;
 
 uniform sampler2D normalMap;
+uniform bool useNormalMap;
 
 uniform mat4 mvpMatrix;
 
@@ -51,8 +52,11 @@ void main()
 
         vec4 texValue = texture(normalMap, fragTexCoord);
         vec3 normalValue = ((texValue - 0.5) * 2).xyz;
-        N = normalize(TBN * normalValue);
         
+        if (useNormalMap) {
+            N = normalize(TBN * normalValue);
+        }
+
         vec3 R = normalize(reflect(-L, N));
         vec3 V = normalize(cameraPosition - fragPosition);
 
