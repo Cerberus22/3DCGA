@@ -31,24 +31,56 @@ struct OceanData {
 	bool doSubdivide = false;
 };
 
+struct Shaders {
+	Shader* simpleShader;
+	Shader* normalShader;
+	Shader* advancedShader;
+	Shader* cometShader;
+	Shader* cometTrailShader;
+	Shader* nightSkyShader;
+	Shader* minimapShader;
+	Shader* oceanShader;
+};
+
+struct Meshes {
+	std::vector<GPUMesh>* ball;
+	std::vector<GPUMesh>* quad;
+	std::vector<GPUMesh>* cup;
+	std::vector<GPUMesh>* ocean;
+};
+
+struct Textures {
+	Texture* noise;
+	Texture* nightSky;
+	Texture* wallNormal;
+	GLuint minimapTexture;
+};
+
+struct Framebuffers {
+	GLuint minimapFramebuffer;
+};
+
 /*
 	This struct can be used for passing interface stuff to the actual shaders.
 */
-struct InterfaceData {
+struct Data {
 	Trackball* trackball;
 		
+	Shaders shaders;
+	Meshes meshes;
+	Textures textures;
+	Framebuffers framebuffers;
+
 	// Solar System Stuff
 	std::vector<Planet> planets;
 	float time;
+	float t_step;
 	int selectedPlanetIndex;
-	Texture* noise;
-	Texture* nightSky;
 	bool useEnvironmentMap;
 	float cometTrailLength;
 
 	// On-planet Stuff
 	CupMaterial cupMaterial;
-	Texture* wallNormal;
 	bool useNormalMap;
 	bool useAdvancedShading;
 	bool drawMinimap;

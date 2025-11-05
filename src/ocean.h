@@ -1,3 +1,3 @@
 #include <framework/shader.h>
 
-void renderOcean(InterfaceData interfaceData, Shader& oceanShader, std::vector<GPUMesh>& ocean);
+void renderOcean(Data& data);

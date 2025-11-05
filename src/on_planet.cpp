@@ -5,7 +5,9 @@
 #include <framework/shader.h>
 #include <iostream>
 
-std::vector<glm::vec3> computeTangents(std::vector<Vertex> vertices, std::vector<glm::uvec3> triangles) {
+std::vector<glm::vec3> computeTangents(const GPUMesh& mesh) {
+	std::vector<Vertex> vertices = mesh.vertices;
+	std::vector<glm::uvec3> triangles = mesh.triangles;
 	std::vector<glm::vec3> tangents;
 
 	for (int i = 0; i < triangles.size(); i++) {
@@ -33,59 +35,74 @@ std::vector<glm::vec3> computeTangents(std::vector<Vertex> vertices, std::vector
 	return tangents;
 }
 
-void shadeOnPlanetScene(InterfaceData interfaceData, Shader& shader, GPUMesh& mesh, int i, glm::mat4 modelMatrix, glm::mat4 mvpMatrix, std::vector<glm::vec3> tangents) {
+void shadeOnPlanetScene(Data& data, glm::mat4 modelMatrix, glm::mat4 mvpMatrix) {
+	std::vector<GPUMesh>& cup = *data.meshes.cup;
+	Shader* shader;
+
+	std::vector<glm::vec3> tangents = computeTangents(cup.at(4));
+
 	glm::mat3 normalModelMatrix = glm::inverseTranspose(glm::mat3(modelMatrix));
 
-	glm::mat4 lightMatrix = glm::rotate(glm::mat4(1), (interfaceData.time * 3), glm::vec3(1, 0, 0));
+	glm::mat4 lightMatrix = glm::rotate(glm::mat4(1), (data.time * 3), glm::vec3(1, 0, 0));
 	glm::vec3 light1Position = glm::vec3(lightMatrix * glm::vec4(0, 4, 2, 1));
 	glm::vec3 light2Position = glm::vec3(lightMatrix * glm::vec4(0, -4, -2, 1));
-	
-	shader.bind();
 
-	glUniformMatrix4fv(shader.getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvpMatrix));
-	glUniformMatrix4fv(shader.getUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
-	glUniformMatrix3fv(shader.getUniformLocation("normalModelMatrix"), 1, GL_FALSE, glm::value_ptr(normalModelMatrix));
+	for (int i = 0; i < cup.size(); i++) {
+		GPUMesh& mesh = cup.at(i);
+		if (i < 4 && data.useAdvancedShading) shader = data.shaders.advancedShader;
+		else shader = data.shaders.normalShader;
 
-	glUniform1f(shader.getUniformLocation("ambientCoeff"), 0);
+		shader->bind();
 
-	glUniform3fv(shader.getUniformLocation("cameraPosition"), 1, glm::value_ptr(interfaceData.trackball->position()));
+		glUniformMatrix4fv(shader->getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+		glUniformMatrix4fv(shader->getUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
+		glUniformMatrix3fv(shader->getUniformLocation("normalModelMatrix"), 1, GL_FALSE, glm::value_ptr(normalModelMatrix));
 
-	if (interfaceData.dayNightCycle) {
-		glUniform3fv(shader.getUniformLocation("light1Position"), 1, glm::value_ptr(light1Position));
-		glUniform3fv(shader.getUniformLocation("light1Color"), 1, glm::value_ptr(interfaceData.dayColor));
+		glUniform1f(shader->getUniformLocation("ambientCoeff"), 0);
 
-		glUniform3fv(shader.getUniformLocation("light2Position"), 1, glm::value_ptr(light2Position));
-		glUniform3fv(shader.getUniformLocation("light2Color"), 1, glm::value_ptr(interfaceData.nightColor));
-	} else {
-		glUniform3fv(shader.getUniformLocation("light1Position"), 1, glm::value_ptr(glm::vec3(0, 4, 2)));
-		glUniform3fv(shader.getUniformLocation("light1Color"), 1, glm::value_ptr(interfaceData.dayColor));
+		glUniform3fv(shader->getUniformLocation("cameraPosition"), 1, glm::value_ptr(data.trackball->position()));
 
-		glUniform3fv(shader.getUniformLocation("light2Position"), 1, glm::value_ptr(glm::vec3(0, 4, 2)));
-		glUniform3fv(shader.getUniformLocation("light2Color"), 1, glm::value_ptr(glm::vec3(0)));
+		if (data.dayNightCycle) {
+			glUniform3fv(shader->getUniformLocation("light1Position"), 1, glm::value_ptr(light1Position));
+			glUniform3fv(shader->getUniformLocation("light1Color"), 1, glm::value_ptr(data.dayColor));
+
+			glUniform3fv(shader->getUniformLocation("light2Position"), 1, glm::value_ptr(light2Position));
+			glUniform3fv(shader->getUniformLocation("light2Color"), 1, glm::value_ptr(data.nightColor));
+		}
+		else {
+			glUniform3fv(shader->getUniformLocation("light1Position"), 1, glm::value_ptr(glm::vec3(0, 4, 2)));
+			glUniform3fv(shader->getUniformLocation("light1Color"), 1, glm::value_ptr(data.dayColor));
+
+			glUniform3fv(shader->getUniformLocation("light2Position"), 1, glm::value_ptr(glm::vec3(0, 4, 2)));
+			glUniform3fv(shader->getUniformLocation("light2Color"), 1, glm::value_ptr(glm::vec3(0)));
+		}
+
+		if (i < 4 && data.useAdvancedShading) {
+			glUniform3fv(shader->getUniformLocation("kd"), 1, glm::value_ptr(data.cupMaterial.m.kd));
+			glUniform1f(shader->getUniformLocation("rho"), data.cupMaterial.rho);
+			glUniform1f(shader->getUniformLocation("sigma"), data.cupMaterial.sigma);
+
+		}
+		else {
+			glUniform3fv(shader->getUniformLocation("kd"), 1, glm::value_ptr(data.cupMaterial.floorKd));
+			glUniform3fv(shader->getUniformLocation("ks"), 1, glm::value_ptr(data.cupMaterial.m.ks));
+			glUniform1f(shader->getUniformLocation("shininess"), data.cupMaterial.m.shininess);
+
+			glUniform3fv(shader->getUniformLocation("tangent"), 1, glm::value_ptr(tangents.at(0)));
+			
+			data.textures.wallNormal->bind(GL_TEXTURE0);
+
+			glUniform1i(shader->getUniformLocation("useNormalMap"), data.useNormalMap);
+			glUniform1i(shader->getUniformLocation("normalMap"), 0);
+		}
+
+		mesh.draw(*shader);
 	}
-
-	if (i != 4 && interfaceData.useAdvancedShading) {
-		glUniform3fv(shader.getUniformLocation("kd"), 1, glm::value_ptr(interfaceData.cupMaterial.m.kd));
-		glUniform1f(shader.getUniformLocation("rho"), interfaceData.cupMaterial.rho);
-		glUniform1f(shader.getUniformLocation("sigma"), interfaceData.cupMaterial.sigma);
-		
-		interfaceData.wallNormal->bind(GL_TEXTURE0);
-	} else {
-		glUniform3fv(shader.getUniformLocation("kd"), 1, glm::value_ptr(interfaceData.cupMaterial.floorKd));
-		glUniform3fv(shader.getUniformLocation("ks"), 1, glm::value_ptr(interfaceData.cupMaterial.m.ks));
-		glUniform1f(shader.getUniformLocation("shininess"), interfaceData.cupMaterial.m.shininess);
-
-		glUniform3fv(shader.getUniformLocation("tangent"), 1, glm::value_ptr(tangents.at(0)));
-
-		glUniform1i(shader.getUniformLocation("useNormalMap"), interfaceData.useNormalMap);
-		glUniform1i(shader.getUniformLocation("normalMap"), 0);
-	}
-
-	mesh.draw(shader);
 }
 
-void renderOnPlanetScene(InterfaceData interfaceData, Shader& normalShader, Shader& advancedShader, Shader& minimapShader, GLuint& minimapTexture, GLuint& minimapFramebuffer, std::vector<GPUMesh>& cup, GPUMesh& quad, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
-	std::vector<glm::vec3> tangents = computeTangents(cup.at(4).vertices, cup.at(4).triangles);
+void renderOnPlanetScene(Data& data, GLuint& minimapFramebuffer, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
+	std::vector<GPUMesh>* cup = data.meshes.cup;
+	
 
 	glm::mat4 modelMatrix = glm::mat4(1);
 	glm::mat4 mvpMatrix = projectionMatrix * viewMatrix * modelMatrix;
@@ -93,16 +110,11 @@ void renderOnPlanetScene(InterfaceData interfaceData, Shader& normalShader, Shad
 	Shader* shader;
 
 	// Render scene
-	for (int i = 0; i < cup.size(); i++) {
-		GPUMesh& mesh = cup.at(i);
-		if (i != 4 && interfaceData.useAdvancedShading) shader = &advancedShader;
-		else shader = &normalShader;
-
-		shadeOnPlanetScene(interfaceData, *shader, mesh, i, modelMatrix, mvpMatrix, tangents);
-	}
+	shadeOnPlanetScene(data, modelMatrix, mvpMatrix);
+	
 
 	// Render minimap texture
-	Trackball* t = interfaceData.trackball;
+	Trackball* t = data.trackball;
 	viewMatrix = glm::lookAt(glm::vec3(t->lookAt().x,10,t->lookAt().z), t->lookAt(), glm::vec3(0, 0, 1));
 	mvpMatrix = projectionMatrix * viewMatrix * modelMatrix;
 	glBindFramebuffer(GL_FRAMEBUFFER, minimapFramebuffer);
@@ -113,18 +125,17 @@ void renderOnPlanetScene(InterfaceData interfaceData, Shader& normalShader, Shad
 	glClearColor(1.f, 0.f, 1.f, 1.f);
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-	for (int i = 0; i < cup.size(); i++) {
-		GPUMesh& mesh = cup.at(i);
-		if (i != 4 && interfaceData.useAdvancedShading) shader = &advancedShader;
-		else shader = &normalShader;
+	shadeOnPlanetScene(data, modelMatrix, mvpMatrix);
 
-		shadeOnPlanetScene(interfaceData, *shader, mesh, i, modelMatrix, mvpMatrix, tangents);
-	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, 1800, 900);
 
 
 	// Render minimap
+	const Shader& minimapShader = *data.shaders.minimapShader;
+	const GLuint minimapTexture = data.textures.minimapTexture;
+	GPUMesh& quad = data.meshes.quad->at(0);
+
 	modelMatrix = glm::translate(glm::mat4(1), glm::vec3(0.8, -0.7, 0)) 
 				* glm::rotate(glm::mat4(1), glm::pi<float>()/2, glm::vec3(1,0,0))
 				* glm::scale(glm::mat4(1), glm::vec3(0.125, 0.25, 0.25));
@@ -143,7 +154,7 @@ void renderOnPlanetScene(InterfaceData interfaceData, Shader& normalShader, Shad
 
 	glUniform1i(minimapShader.getUniformLocation("tex"), 0);
 	
-	if (interfaceData.drawMinimap) {
+	if (data.drawMinimap) {
 		quad.draw(minimapShader);
 	}
 }

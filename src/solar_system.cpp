@@ -193,8 +193,11 @@ std::vector<Planet> populatePlanets() {
 }
 
 // Renders a single planet
-void renderPlanet(InterfaceData interfaceData, Shader& shader, GPUMesh* ball, Planet planet, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
-	float time = interfaceData.time;
+void renderPlanet(Data& data, Planet planet, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
+	float time = data.time;
+
+	const Shader& shader = *data.shaders.simpleShader;
+	GPUMesh* ball = &data.meshes.ball->at(0);
 
 	// Compute modelmatrix
 	glm::mat4 modelMatrix = glm::scale(glm::mat4(1), glm::vec3(planet.radius)) * glm::rotate(glm::mat4(1), (time * planet.spinSpeed), glm::vec3(0, 1, 0));
@@ -204,11 +207,11 @@ void renderPlanet(InterfaceData interfaceData, Shader& shader, GPUMesh* ball, Pl
 
 	while (parentIndex != -1) {
 		modelMatrix = glm::rotate(glm::mat4(1), (time * current->orbitSpeed), glm::vec3(0, 1, 0)) * glm::translate(glm::mat4(1), glm::vec3(current->distParent, 0, 0)) * modelMatrix;
-		current = &interfaceData.planets.at(current->parentPlanet);
-		parentIndex = interfaceData.planets.at(parentIndex).parentPlanet;
+		current = &data.planets.at(current->parentPlanet);
+		parentIndex = data.planets.at(parentIndex).parentPlanet;
 	}
 	
-	Planet* sun = &interfaceData.planets.at(1);
+	Planet* sun = &data.planets.at(1);
 	glm::mat4 sunMatrix = glm::rotate(glm::mat4(1), (time * sun->orbitSpeed), glm::vec3(0, 1, 0)) * glm::translate(glm::mat4(1), glm::vec3(sun->distParent, 0, 0));
 
 	const glm::mat3 normalModelMatrix = glm::inverseTranspose(glm::mat3(modelMatrix));
@@ -226,25 +229,28 @@ void renderPlanet(InterfaceData interfaceData, Shader& shader, GPUMesh* ball, Pl
 	glUniform3fv(shader.getUniformLocation("kd"), 1, glm::value_ptr(planet.material.kd));
 	glUniform3fv(shader.getUniformLocation("ks"), 1, glm::value_ptr(planet.material.ks));
 	glUniform1f(shader.getUniformLocation("shininess"), planet.material.shininess);
-	glUniform3fv(shader.getUniformLocation("cameraPosition"), 1, glm::value_ptr(interfaceData.trackball->position()));
+	glUniform3fv(shader.getUniformLocation("cameraPosition"), 1, glm::value_ptr(data.trackball->position()));
 	
 	glUniform3fv(shader.getUniformLocation("lightPosition"), 1, glm::value_ptr(sunMatrix * glm::vec4(0,0,0,1)));
 	glUniform3fv(shader.getUniformLocation("lightColor"), 1, glm::value_ptr(sun->material.kd));
 
 	glUniform1i(shader.getUniformLocation("hasSunTexture"), planet.hasSunTexture);
 	glUniform1i(shader.getUniformLocation("normalMap"), 0);
-	interfaceData.noise->bind(GL_TEXTURE0);
+	data.textures.noise->bind(GL_TEXTURE0);
 
 	ball->draw(shader);
 }
 
 // Renders the planets
-void renderSolarSystemScene(InterfaceData interfaceData, Shader& shader, Shader& nightSkyShader, GPUMesh* ball, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
-	const glm::mat4 modelMatrix = glm::translate(glm::mat4(1), interfaceData.trackball->position());
+void renderSolarSystemScene(Data& data, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
+	const Shader& nightSkyShader = *data.shaders.nightSkyShader;
+	GPUMesh* ball = &data.meshes.ball->at(0);
+	
+	const glm::mat4 modelMatrix = glm::translate(glm::mat4(1), data.trackball->position());
 	const glm::mat4 mvpMatrix = projectionMatrix * viewMatrix * modelMatrix;
 	const glm::mat3 normalModelMatrix = glm::inverseTranspose(glm::mat3(modelMatrix));
 
-	if (interfaceData.useEnvironmentMap) {
+	if (data.useEnvironmentMap) {
 		// Render starry background
 		glDisable(GL_DEPTH_TEST);
 		glDepthMask(GL_FALSE);
@@ -254,7 +260,7 @@ void renderSolarSystemScene(InterfaceData interfaceData, Shader& shader, Shader&
 		glUniformMatrix4fv(nightSkyShader.getUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
 		glUniformMatrix3fv(nightSkyShader.getUniformLocation("normalModelMatrix"), 1, GL_FALSE, glm::value_ptr(normalModelMatrix));
 
-		interfaceData.nightSky->bind(GL_TEXTURE0);
+		data.textures.nightSky->bind(GL_TEXTURE0);
 
 		glUniform1i(nightSkyShader.getUniformLocation("tex"), 0);
 
@@ -265,7 +271,7 @@ void renderSolarSystemScene(InterfaceData interfaceData, Shader& shader, Shader&
 	}
 
 	// Render planets
-	for (Planet p : interfaceData.planets) {
+	for (Planet p : data.planets) {
 		glEnable(GL_DEPTH_TEST);
 		glDepthMask(GL_TRUE);
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -273,7 +279,7 @@ void renderSolarSystemScene(InterfaceData interfaceData, Shader& shader, Shader&
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_ONE, GL_ZERO);
 			
-		renderPlanet(interfaceData, shader, ball, p, projectionMatrix, viewMatrix);
+		renderPlanet(data, p, projectionMatrix, viewMatrix);
 	}
 }
 
@@ -300,10 +306,13 @@ std::vector<BezierSegment> cometPath = {
 };
 
 // Renders the comet
-void renderComet(InterfaceData interfaceData, float deltaTime, GPUMesh* ballMesh, Shader& cometShader, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
+void renderComet(Data& data, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
+	const Shader& cometShader = *data.shaders.cometShader;
+	GPUMesh* ball = &data.meshes.ball->at(0);
+
 	int numSegments = (int)cometPath.size();
 
-	cometPathProgress += 0.02 * deltaTime;
+	cometPathProgress += 0.02 * data.t_step;
     if (cometPathProgress > 1) cometPathProgress -= 1;
     
     int currentSegmentIndex = std::floor(cometPathProgress * numSegments);
@@ -332,7 +341,7 @@ void renderComet(InterfaceData interfaceData, float deltaTime, GPUMesh* ballMesh
 	float totalLength = 0.0f;
 	for (int i = cometTrail.size() - 1; i > 0; i--) {
 		totalLength += glm::length(cometTrail[i] - cometTrail[i - 1]);
-		if (totalLength > interfaceData.cometTrailLength) {
+		if (totalLength > data.cometTrailLength) {
 			cometTrail.erase(cometTrail.begin(), cometTrail.begin() + i - 1);
 			break;
 		}
@@ -346,12 +355,14 @@ void renderComet(InterfaceData interfaceData, float deltaTime, GPUMesh* ballMesh
     glUniformMatrix4fv(cometShader.getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvp));
     glUniform3fv(cometShader.getUniformLocation("emissiveColor"), 1, glm::value_ptr(glm::vec3(1.0f, 0.8f, 0.6f)));
 
-    ballMesh->draw(cometShader);
+    ball->draw(cometShader);
 }
 
 // Renders the trajectory (Bezier curve) of the comet
-void renderCometTrajectory(const InterfaceData& interfaceData, Shader& shader, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
-    // Sample points along the entire path
+void renderCometTrajectory(Data& data, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
+	const Shader& shader = *data.shaders.cometShader;
+	
+	// Sample points along the entire path
     std::vector<glm::vec3> trajectoryPoints;
     const int samplesPerSegment = 40;
     for (const auto& segment : cometPath) {
@@ -387,8 +398,10 @@ void renderCometTrajectory(const InterfaceData& interfaceData, Shader& shader, g
 }
 
 // Renders the fading comet trail
-void renderCometTrail(Shader& trailShader, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
-    if (cometTrail.size() < 2) return;
+void renderCometTrail(Data& data, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
+	const Shader& trailShader = *data.shaders.cometTrailShader;
+	
+	if (cometTrail.size() < 2) return;
 
     // Compute fading alphas
     std::vector<float> alphas;

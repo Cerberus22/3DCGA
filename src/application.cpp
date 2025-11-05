@@ -60,31 +60,36 @@ public:
         cup = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/champions.obj");
         ocean = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/ocean.obj");
 
-        interfaceData.time = 0.f;
-        t_step = 0.05f;
-        interfaceData.planets = populatePlanets();
-        interfaceData.trackball = &trackball;
-        interfaceData.selectedPlanetIndex = 0;
-        interfaceData.cometTrailLength = 5.0f;
+        data.meshes.ball = &ball;
+        data.meshes.quad = &quad;
+        data.meshes.cup = &cup;
+        data.meshes.ocean = &ocean;
 
-        interfaceData.cupMaterial.rho = 1.f;
-        interfaceData.cupMaterial.sigma = 0.f;
-        interfaceData.cupMaterial.m.kd = glm::vec3(1.0);
-        interfaceData.cupMaterial.floorKd = glm::vec3(1.f);
+        data.t_step = 0.05f;
 
-        interfaceData.noise = &noise;
-        interfaceData.nightSky = &nightSky;
-        interfaceData.useEnvironmentMap = true;
-        interfaceData.wallNormal = &wallNormal;
+        data.time = 0.f;
+        data.planets = populatePlanets();
+        data.trackball = &trackball;
+        data.selectedPlanetIndex = 0;
+        data.cometTrailLength = 5.0f;
 
-        interfaceData.dayNightCycle = true;
-        interfaceData.dayColor = glm::vec3(1, 0.8, 0.8);
-	    interfaceData.nightColor = glm::vec3(0.6, 0.6, 1);
+        data.cupMaterial.rho = 1.f;
+        data.cupMaterial.sigma = 0.f;
+        data.cupMaterial.m.kd = glm::vec3(1.0);
+        data.cupMaterial.floorKd = glm::vec3(1.f);
+        
+        data.useEnvironmentMap = true;
+        data.textures.noise = &noise;
+        data.textures.nightSky = &nightSky;
+        data.textures.wallNormal = &wallNormal;
 
-        // Create minimap stuffs
+        data.dayNightCycle = true;
+        data.dayColor = glm::vec3(1, 0.8, 0.8);
+	    data.nightColor = glm::vec3(0.6, 0.6, 1);
+
         createTexture(minimapTexture, minimapFramebuffer);
-
-        //normalMap = renderSmoothNormalMap();
+        data.textures.minimapTexture = minimapTexture;
+        data.framebuffers.minimapFramebuffer = minimapFramebuffer;
 
         try {
             // Any new shaders can be added below in similar fashion.
@@ -97,42 +102,50 @@ public:
             simpleShaderBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/shading/vert_general.glsl");
             simpleShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/shading/frag_simple_shading.glsl");
             simpleShader = simpleShaderBuilder.build();
+            data.shaders.simpleShader = &simpleShader;
 
             ShaderBuilder normalShaderBuilder;
             normalShaderBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/texture/vert_normal.glsl");
             normalShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/texture/frag_normal.glsl");
             normalShader = normalShaderBuilder.build();
+            data.shaders.normalShader = &normalShader;
 
             ShaderBuilder advancedShaderBuilder;
             advancedShaderBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/shading/vert_general.glsl");
             advancedShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/shading/frag_oren_nayar.glsl");
             advancedShader = advancedShaderBuilder.build();
+            data.shaders.advancedShader = &advancedShader;
 
             ShaderBuilder cometShaderBuilder;
             cometShaderBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/shading/vert_general.glsl");
             cometShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/comet/frag_comet.glsl");
             cometShader = cometShaderBuilder.build();
+            data.shaders.cometShader = &cometShader;
 
             ShaderBuilder cometTrailShaderBuilder;
             cometTrailShaderBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/comet/vert_comet_trail.glsl");
             cometTrailShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/comet/frag_comet_trail.glsl");
             cometTrailShader = cometTrailShaderBuilder.build();
+            data.shaders.cometTrailShader = &cometTrailShader;
 
             ShaderBuilder nigthSkyShaderBuilder;
             nigthSkyShaderBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/shading/vert_general.glsl");
             nigthSkyShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/texture/frag_minimap.glsl");
             nightSkyShader = nigthSkyShaderBuilder.build();
+            data.shaders.nightSkyShader = &nightSkyShader;
 
             ShaderBuilder minimapShaderBuilder;
             minimapShaderBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/texture/vert_minimap.glsl");
             minimapShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/texture/frag_minimap.glsl");
             minimapShader = minimapShaderBuilder.build();
+            data.shaders.minimapShader = &minimapShader;
 
             ShaderBuilder oceanShaderBuilder;
             oceanShaderBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/ocean/vert_ocean.glsl");
             oceanShaderBuilder.addStage(GL_GEOMETRY_SHADER, RESOURCE_ROOT "shaders/ocean/geom_ocean.glsl");
             oceanShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/ocean/frag_ocean.glsl");
             oceanShader = oceanShaderBuilder.build();
+            data.shaders.oceanShader = &oceanShader;
 
         } catch (ShaderLoadingException e) {
             std::cerr << e.what() << std::endl;
@@ -142,7 +155,7 @@ public:
     void renderSolarSystemGUI() {
         // Display planets in scene
         std::vector<std::string> planetNames = {};
-        for (Planet planet: interfaceData.planets) {
+        for (Planet planet: data.planets) {
             planetNames.push_back(planet.name);
         }
 
@@ -153,12 +166,12 @@ public:
 
         ImGui::Separator();
         ImGui::Text("Planets");
-        int tempSelectedItem = interfaceData.selectedPlanetIndex;
+        int tempSelectedItem = data.selectedPlanetIndex;
         if (ImGui::ListBox(" ", &tempSelectedItem, itemCStrings.data(), (int) itemCStrings.size(), 10)) {
-            interfaceData.selectedPlanetIndex = static_cast<size_t>(tempSelectedItem);
+            data.selectedPlanetIndex = static_cast<size_t>(tempSelectedItem);
         }
 
-        Planet& p = interfaceData.planets[interfaceData.selectedPlanetIndex];
+        Planet& p = data.planets[data.selectedPlanetIndex];
 
         ImGui::Separator();
         ImGui::Text("Current planet material");
@@ -170,10 +183,10 @@ public:
         ImGui::Separator();
         ImGui::Text("Comet (Bezier curve)");
         ImGui::Checkbox("Draw comet trajectory", &drawCometTrajectory);
-        ImGui::SliderFloat("Comet trail length", &interfaceData.cometTrailLength, 0.f, 10.f, "%.1f");
+        ImGui::SliderFloat("Comet trail length", &data.cometTrailLength, 0.f, 10.f, "%.1f");
 
         ImGui::Separator();
-        ImGui::Checkbox("Environment map", &interfaceData.useEnvironmentMap);
+        ImGui::Checkbox("Environment map", &data.useEnvironmentMap);
     }
 
     void update()
@@ -184,7 +197,7 @@ public:
         const char* viewpoints[] = { "First", "Second" };
 
         while (!m_window.shouldClose()) {
-            interfaceData.time += t_step / 100;
+            data.time += data.t_step / 100;
 
             // This is your game loop
             // Put your real-time logic and rendering in here
@@ -198,8 +211,8 @@ public:
                 ImGui::Begin("Assignment 2");
 
                 ImGui::Combo("Scene", &sceneNr, scenes, 3);
-                ImGui::SliderFloat("Time Speed", &t_step, 0.f, 1.f, "%.3f");
-                ImGui::Text("Time: %.3f", interfaceData.time);
+                ImGui::SliderFloat("Time Speed", &data.t_step, 0.f, 1.f, "%.3f");
+                ImGui::Text("Time: %.3f", data.time);
                 ImGui::Separator();
 
                 switch(sceneNr) {
@@ -208,25 +221,25 @@ public:
                     break;
                 case 1:
                     ImGui::Combo("Viewpoint", &selectedViewpoint, viewpoints, 2);
-                    ImGui::ColorEdit3("Diffuse", glm::value_ptr(interfaceData.cupMaterial.m.kd));
-                    ImGui::ColorEdit3("Floor", glm::value_ptr(interfaceData.cupMaterial.floorKd));
+                    ImGui::ColorEdit3("Diffuse", glm::value_ptr(data.cupMaterial.m.kd));
+                    ImGui::ColorEdit3("Floor", glm::value_ptr(data.cupMaterial.floorKd));
 
-                    ImGui::Checkbox("Normal map", &interfaceData.useNormalMap);
-                    ImGui::Checkbox("Advanced shading", &interfaceData.useAdvancedShading);
-                    ImGui::Checkbox("Minimap", &interfaceData.drawMinimap);
+                    ImGui::Checkbox("Normal map", &data.useNormalMap);
+                    ImGui::Checkbox("Advanced shading", &data.useAdvancedShading);
+                    ImGui::Checkbox("Minimap", &data.drawMinimap);
 
-                    ImGui::SliderFloat("Rho (Albedo)", &interfaceData.cupMaterial.rho, 0, 1, "%.2f");
-                    ImGui::SliderFloat("Sigma (Rough)", &interfaceData.cupMaterial.sigma, 0, 1, "%.2f");
-                    ImGui::Checkbox("Day/night cycle", &interfaceData.dayNightCycle);
-                    ImGui::ColorEdit3("Daylight color", glm::value_ptr(interfaceData.dayColor));
-                    ImGui::ColorEdit3("Nightlight color", glm::value_ptr(interfaceData.nightColor));
+                    ImGui::SliderFloat("Rho (Albedo)", &data.cupMaterial.rho, 0, 1, "%.2f");
+                    ImGui::SliderFloat("Sigma (Rough)", &data.cupMaterial.sigma, 0, 1, "%.2f");
+                    ImGui::Checkbox("Day/night cycle", &data.dayNightCycle);
+                    ImGui::ColorEdit3("Daylight color", glm::value_ptr(data.dayColor));
+                    ImGui::ColorEdit3("Nightlight color", glm::value_ptr(data.nightColor));
                     break;
                 case 2:
-                    ImGui::SliderFloat("Amplitude", &interfaceData.oceanData.amplitude, 0, 1, "%.2f");
-                    ImGui::SliderFloat("X Frequency", &interfaceData.oceanData.fx, 0, 1, "%.2f");
-                    ImGui::SliderFloat("Y Frequency", &interfaceData.oceanData.fz, 0, 1, "%.2f");
-                    ImGui::SliderFloat("Time Frequency", &interfaceData.oceanData.ft, 0, 1, "%.2f");
-                    ImGui::Checkbox("Subdivide", &interfaceData.oceanData.doSubdivide);
+                    ImGui::SliderFloat("Amplitude", &data.oceanData.amplitude, 0, 1, "%.2f");
+                    ImGui::SliderFloat("X Frequency", &data.oceanData.fx, 0, 1, "%.2f");
+                    ImGui::SliderFloat("Y Frequency", &data.oceanData.fz, 0, 1, "%.2f");
+                    ImGui::SliderFloat("Time Frequency", &data.oceanData.ft, 0, 1, "%.2f");
+                    ImGui::Checkbox("Subdivide", &data.oceanData.doSubdivide);
                     break;
                 }
 
@@ -242,12 +255,12 @@ public:
             switch (sceneNr) {
             case 0:
                 m_viewMatrix = trackball.viewMatrix();
-                renderSolarSystemScene(interfaceData, simpleShader, nightSkyShader, &(ball.at(0)), m_projectionMatrix, m_viewMatrix);
-                renderComet(interfaceData, t_step, &(ball.at(0)), cometShader, m_projectionMatrix, m_viewMatrix);
+                renderSolarSystemScene(data, m_projectionMatrix, m_viewMatrix);
+                renderComet(data, m_projectionMatrix, m_viewMatrix);
                 if (drawCometTrajectory) {
-                    renderCometTrajectory(interfaceData, cometShader, m_projectionMatrix, m_viewMatrix);
+                    renderCometTrajectory(data, m_projectionMatrix, m_viewMatrix);
                 }
-                renderCometTrail(cometTrailShader, m_projectionMatrix, m_viewMatrix);
+                renderCometTrail(data, m_projectionMatrix, m_viewMatrix);
                 break;
             case 1:
                 if (selectedViewpoint == 0) {
@@ -260,10 +273,10 @@ public:
                     glm::vec3 up(0, 1, 0);
                     m_viewMatrix = glm::lookAt(cameraPos, target, up);
                 }
-                renderOnPlanetScene(interfaceData, normalShader, advancedShader, minimapShader, minimapTexture, minimapFramebuffer, cup, quad.at(0), m_projectionMatrix, m_viewMatrix);
+                renderOnPlanetScene(data, minimapFramebuffer, m_projectionMatrix, m_viewMatrix);
                 break;
             case 2:
-                renderOcean(interfaceData, oceanShader, ocean);
+                renderOcean(data);
             }
             // Processes input and swaps the window buffer
             m_window.swapBuffers();
@@ -352,7 +365,7 @@ private:
     glm::mat4 m_viewMatrix = glm::lookAt(glm::vec3(-1, 1, -1), glm::vec3(0), glm::vec3(0, 1, 0));
     glm::mat4 m_modelMatrix { 1.0f };
 
-    InterfaceData interfaceData;
+    Data data;
 
     Texture nightSky;
     Texture noise;
@@ -361,8 +374,6 @@ private:
 
     GLuint minimapTexture;
     GLuint minimapFramebuffer;
-
-    float t_step;
 
     int selectedViewpoint = 0;
 
