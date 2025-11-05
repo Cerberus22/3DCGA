@@ -41,6 +41,9 @@ public:
             else if (action == GLFW_RELEASE)
                 onKeyReleased(key, mods);
         });
+
+        showUI = true;
+
         /*
         m_window.registerMouseMoveCallback(std::bind(&Application::onMouseMove, this, std::placeholders::_1));
         m_window.registerMouseButtonCallback([this](int button, int action, int mods) {
@@ -189,23 +192,24 @@ public:
             m_projectionMatrix = trackball.projectionMatrix();
 
             // Use ImGui for easy input/output of ints, floats, strings, etc...
-            ImGui::Begin("Assignment 2");
+            if (showUI) {
+                ImGui::Begin("Assignment 2");
 
-            ImGui::Combo("Scene", &sceneNr, scenes, 2);
+                ImGui::Combo("Scene", &sceneNr, scenes, 2);
 
-            if (sceneNr == 0) {
-                renderSolarSystemGUI();
+                if (sceneNr == 0) {
+                    renderSolarSystemGUI();
+                }
+                else {
+                    ImGui::Combo("Viewpoint", &selectedViewpoint, viewpoints, 2);
+                    ImGui::ColorEdit3("Diffuse", glm::value_ptr(interfaceData.cupMaterial.m.kd));
+                    ImGui::SliderFloat("Rho (Albedo)", &interfaceData.cupMaterial.rho, 0, 1, "%.2f");
+                    ImGui::SliderFloat("Sigma (Rough)", &interfaceData.cupMaterial.sigma, 0, 1, "%.2f");
+                    ImGui::DragFloat3("Temp", glm::value_ptr(interfaceData.temp), 0.1, -10, 10);
+                }
+
+                ImGui::End();
             }
-            else {
-                ImGui::Combo("Viewpoint", &selectedViewpoint, viewpoints, 2);
-                ImGui::ColorEdit3("Diffuse", glm::value_ptr(interfaceData.cupMaterial.m.kd));
-                ImGui::SliderFloat("Rho (Albedo)", &interfaceData.cupMaterial.rho, 0, 1, "%.2f");
-                ImGui::SliderFloat("Sigma (Rough)", &interfaceData.cupMaterial.sigma, 0, 1, "%.2f");
-                ImGui::DragFloat3("Temp", glm::value_ptr(interfaceData.temp), 0.1, -10, 10);
-            }
-
-            ImGui::End();
-
             // Clear the screen
             glClearColor(0.04f, 0.04f, 0.08f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -214,7 +218,7 @@ public:
             glDepthFunc(GL_LEQUAL);
 
             if (sceneNr == 0) {
-                m_viewMatrix = trackball.viewMatrix(); 
+                m_viewMatrix = trackball.viewMatrix();
                 renderSolarSystemScene(interfaceData, simpleShader, nightSkyShader, &(ball.at(0)), m_projectionMatrix, m_viewMatrix);
                 renderComet(interfaceData, t_step, &(ball.at(0)), cometShader, m_projectionMatrix, m_viewMatrix);
                 if (drawCometTrajectory) {
@@ -224,8 +228,9 @@ public:
             }
             else {
                 if (selectedViewpoint == 0) {
-                    m_viewMatrix = trackball.viewMatrix(); 
-                } else {
+                    m_viewMatrix = trackball.viewMatrix();
+                }
+                else {
                     // TODO: trackball still gets updated, even though we do not intend to
                     glm::vec3 cameraPos(5, 3, 5);
                     glm::vec3 target(0, 0, 0);
@@ -246,6 +251,15 @@ public:
     void onKeyPressed(int key, int mods)
     {
         std::cout << "Key pressed: " << key << std::endl;
+        switch (key) {
+            case GLFW_KEY_BACKSLASH: {
+                showUI = !showUI;
+                break;
+            }
+            default: {
+                break;
+            }
+        }
     }
 
     // In here you can handle key releases
@@ -280,6 +294,8 @@ public:
 
 private:
     Window m_window;
+
+    bool showUI;
 
     // Shader for default rendering and for depth rendering
     Shader m_defaultShader;
