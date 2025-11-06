@@ -76,16 +76,22 @@ public:
         data.cupMaterial.rho = 1.f;
         data.cupMaterial.sigma = 0.f;
         data.cupMaterial.m.kd = glm::vec3(1.0);
-        data.cupMaterial.floorKd = glm::vec3(1.f);
+        data.advancedLightColor = glm::vec3(1.f);
         
-        data.useEnvironmentMap = true;
         data.textures.noise = &noise;
         data.textures.nightSky = &nightSky;
         data.textures.wallNormal = &wallNormal;
 
-        data.dayNightCycle = true;
+        data.useNormalMap = false;
+
         data.dayColor = glm::vec3(1, 0.8, 0.8);
 	    data.nightColor = glm::vec3(0.6, 0.6, 1);
+
+        data.oceanData.amplitude = 1.0f;
+        data.oceanData.fx = 0.3f;
+        data.oceanData.fz = 0.6f;
+        data.oceanData.ft = 0.5f;
+        data.oceanData.doSubdivide = false;
 
         createTexture(minimapTexture, minimapFramebuffer);
         data.textures.minimapTexture = minimapTexture;
@@ -217,27 +223,34 @@ public:
                 ImGui::Text("Time: %.3f", data.time);
                 ImGui::Separator();
 
-                switch(sceneNr) {
-                case 0: 
+                switch (sceneNr) {
+                case 0:
                     renderSolarSystemGUI();
                     break;
                 case 1:
                     ImGui::Combo("Viewpoint", &selectedViewpoint, viewpoints, 2);
                     ImGui::ColorEdit3("Diffuse", glm::value_ptr(data.cupMaterial.m.kd));
-                    ImGui::ColorEdit3("Floor", glm::value_ptr(data.cupMaterial.floorKd));
+                    ImGui::ColorEdit3("Light color", glm::value_ptr(data.advancedLightColor));
 
+                    ImGui::Separator();
                     ImGui::Checkbox("Normal map", &data.useNormalMap);
-                    ImGui::Checkbox("Advanced shading", &data.useAdvancedShading);
                     ImGui::Checkbox("Minimap", &data.drawMinimap);
 
-                    ImGui::SliderFloat("Rho (Albedo)", &data.cupMaterial.rho, 0, 1, "%.2f");
-                    ImGui::SliderFloat("Sigma (Rough)", &data.cupMaterial.sigma, 0, 1, "%.2f");
                     ImGui::Checkbox("Day/night cycle", &data.dayNightCycle);
-                    ImGui::ColorEdit3("Daylight color", glm::value_ptr(data.dayColor));
-                    ImGui::ColorEdit3("Nightlight color", glm::value_ptr(data.nightColor));
+                    if (data.dayNightCycle) {
+                        ImGui::ColorEdit3("Daylight color", glm::value_ptr(data.dayColor));
+                        ImGui::ColorEdit3("Nightlight color", glm::value_ptr(data.nightColor));
+                    }
+
+                    ImGui::Separator();
+                    ImGui::Checkbox("Advanced shading (exclusive)", &data.useAdvancedShading);
+                    if (data.useAdvancedShading) {
+                        ImGui::SliderFloat("Rho (Albedo)", &data.cupMaterial.rho, 0, 1, "%.2f");
+                        ImGui::SliderFloat("Sigma (Rough)", &data.cupMaterial.sigma, 0, 1, "%.2f");
+                    }
                     break;
                 case 2:
-                    ImGui::SliderFloat("Amplitude", &data.oceanData.amplitude, 0, 1, "%.2f");
+                    ImGui::SliderFloat("Amplitude", &data.oceanData.amplitude, 0, 3, "%.2f");
                     ImGui::SliderFloat("X Frequency", &data.oceanData.fx, 0, 1, "%.2f");
                     ImGui::SliderFloat("Y Frequency", &data.oceanData.fz, 0, 1, "%.2f");
                     ImGui::SliderFloat("Time Frequency", &data.oceanData.ft, 0, 1, "%.2f");

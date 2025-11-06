@@ -49,7 +49,7 @@ void shadeOnPlanetScene(Data& data, glm::mat4 modelMatrix, glm::mat4 mvpMatrix) 
 
 	for (int i = 0; i < cup.size(); i++) {
 		GPUMesh& mesh = cup.at(i);
-		if (i < 4 && data.useAdvancedShading) shader = data.shaders.advancedShader;
+		if (data.useAdvancedShading) shader = data.shaders.advancedShader;
 		else shader = data.shaders.normalShader;
 
 		shader->bind();
@@ -59,32 +59,34 @@ void shadeOnPlanetScene(Data& data, glm::mat4 modelMatrix, glm::mat4 mvpMatrix) 
 		glUniformMatrix3fv(shader->getUniformLocation("normalModelMatrix"), 1, GL_FALSE, glm::value_ptr(normalModelMatrix));
 
 		glUniform1f(shader->getUniformLocation("ambientCoeff"), 0);
+		glUniform3fv(shader->getUniformLocation("kd"), 1, glm::value_ptr(data.cupMaterial.m.kd));
 
 		glUniform3fv(shader->getUniformLocation("cameraPosition"), 1, glm::value_ptr(data.trackball->position()));
 
-		if (data.dayNightCycle) {
-			glUniform3fv(shader->getUniformLocation("light1Position"), 1, glm::value_ptr(light1Position));
-			glUniform3fv(shader->getUniformLocation("light1Color"), 1, glm::value_ptr(data.dayColor));
-
-			glUniform3fv(shader->getUniformLocation("light2Position"), 1, glm::value_ptr(light2Position));
-			glUniform3fv(shader->getUniformLocation("light2Color"), 1, glm::value_ptr(data.nightColor));
-		}
-		else {
-			glUniform3fv(shader->getUniformLocation("light1Position"), 1, glm::value_ptr(glm::vec3(0, 4, 2)));
-			glUniform3fv(shader->getUniformLocation("light1Color"), 1, glm::value_ptr(data.dayColor));
-
-			glUniform3fv(shader->getUniformLocation("light2Position"), 1, glm::value_ptr(glm::vec3(0, 4, 2)));
-			glUniform3fv(shader->getUniformLocation("light2Color"), 1, glm::value_ptr(glm::vec3(0)));
-		}
-
-		if (i < 4 && data.useAdvancedShading) {
-			glUniform3fv(shader->getUniformLocation("kd"), 1, glm::value_ptr(data.cupMaterial.m.kd));
+		if (data.useAdvancedShading) {
 			glUniform1f(shader->getUniformLocation("rho"), data.cupMaterial.rho);
 			glUniform1f(shader->getUniformLocation("sigma"), data.cupMaterial.sigma);
-
+			
+			glUniform3fv(shader->getUniformLocation("lightPosition"), 1, glm::value_ptr(glm::vec3(0, 4, 2)));
+			glUniform3fv(shader->getUniformLocation("lightColor"), 1, glm::value_ptr(data.advancedLightColor * glm::pi<float>()));
 		}
 		else {
-			glUniform3fv(shader->getUniformLocation("kd"), 1, glm::value_ptr(data.cupMaterial.floorKd));
+			if (data.dayNightCycle) {
+				glUniform3fv(shader->getUniformLocation("light1Position"), 1, glm::value_ptr(light1Position));
+				glUniform3fv(shader->getUniformLocation("light1Color"), 1, glm::value_ptr(data.dayColor));
+
+				glUniform3fv(shader->getUniformLocation("light2Position"), 1, glm::value_ptr(light2Position));
+				glUniform3fv(shader->getUniformLocation("light2Color"), 1, glm::value_ptr(data.nightColor));
+			}
+			else {
+				glUniform3fv(shader->getUniformLocation("light1Position"), 1, glm::value_ptr(glm::vec3(0, 4, 2)));
+				glUniform3fv(shader->getUniformLocation("light1Color"), 1, glm::value_ptr(data.advancedLightColor));
+
+				glUniform3fv(shader->getUniformLocation("light2Position"), 1, glm::value_ptr(glm::vec3(0, 4, 2)));
+				glUniform3fv(shader->getUniformLocation("light2Color"), 1, glm::value_ptr(glm::vec3(0)));
+			}
+
+
 			glUniform3fv(shader->getUniformLocation("ks"), 1, glm::value_ptr(data.cupMaterial.m.ks));
 			glUniform1f(shader->getUniformLocation("shininess"), data.cupMaterial.m.shininess);
 

@@ -83,6 +83,7 @@ struct Data {
 	CupMaterial cupMaterial;
 	bool useNormalMap;
 	bool useAdvancedShading;
+	glm::vec3 advancedLightColor;
 	bool drawMinimap;
 
 	bool dayNightCycle;
