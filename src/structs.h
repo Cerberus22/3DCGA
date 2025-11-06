@@ -40,6 +40,7 @@ struct Shaders {
 	Shader* nightSkyShader;
 	Shader* minimapShader;
 	Shader* oceanShader;
+	Shader* shadowShader;
 };
 
 struct Meshes {
@@ -83,7 +84,8 @@ struct Data {
 	CupMaterial cupMaterial;
 	bool useNormalMap;
 	bool useAdvancedShading;
-	glm::vec3 advancedLightColor;
+	glm::vec3 light1Color;
+	glm::vec3 light2Color;
 	bool drawMinimap;
 
 	bool dayNightCycle;

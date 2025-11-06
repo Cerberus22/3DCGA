@@ -76,13 +76,15 @@ public:
         data.cupMaterial.rho = 1.f;
         data.cupMaterial.sigma = 0.f;
         data.cupMaterial.m.kd = glm::vec3(1.0);
-        data.advancedLightColor = glm::vec3(1.f);
+        data.light1Color = glm::vec3(0.5f, 0, 0);
+        data.light2Color = glm::vec3(0, 0, 0.5f);
         
         data.textures.noise = &noise;
         data.textures.nightSky = &nightSky;
         data.textures.wallNormal = &wallNormal;
 
         data.useNormalMap = false;
+        data.useAdvancedShading = false;
 
         data.dayColor = glm::vec3(1, 0.8, 0.8);
 	    data.nightColor = glm::vec3(0.6, 0.6, 1);
@@ -98,6 +100,7 @@ public:
         data.framebuffers.minimapFramebuffer = minimapFramebuffer;
 
         createBuffers();
+        generateShadowStuff();
 
         try {
             // Any new shaders can be added below in similar fashion.
@@ -155,6 +158,11 @@ public:
             oceanShader = oceanShaderBuilder.build();
             data.shaders.oceanShader = &oceanShader;
 
+            ShaderBuilder shadowShaderBuilder;
+            shadowShaderBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/texture/vert_minimap.glsl");
+            shadowShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/texture/frag_minimap.glsl");
+            shadowShader = shadowShaderBuilder.build();
+            data.shaders.shadowShader = &shadowShader;
         } catch (ShaderLoadingException e) {
             std::cerr << e.what() << std::endl;
         }
@@ -230,7 +238,8 @@ public:
                 case 1:
                     ImGui::Combo("Viewpoint", &selectedViewpoint, viewpoints, 2);
                     ImGui::ColorEdit3("Diffuse", glm::value_ptr(data.cupMaterial.m.kd));
-                    ImGui::ColorEdit3("Light color", glm::value_ptr(data.advancedLightColor));
+                    ImGui::ColorEdit3("Light 1 color", glm::value_ptr(data.light1Color));
+                    ImGui::ColorEdit3("Light 2 color", glm::value_ptr(data.light2Color));
 
                     ImGui::Separator();
                     ImGui::Checkbox("Normal map", &data.useNormalMap);
@@ -298,6 +307,7 @@ public:
         }
         deleteTexture(minimapTexture, minimapFramebuffer);
         destroyBuffers();
+        deleteShadowStuff();
     }
 
     // In here you can handle key presses
@@ -365,6 +375,7 @@ private:
     Shader nightSkyShader;
     Shader minimapShader;
     Shader oceanShader;
+    Shader shadowShader;
 
     std::vector<GPUMesh> ball;
     std::vector<GPUMesh> cup;
