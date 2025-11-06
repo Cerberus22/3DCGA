@@ -108,10 +108,11 @@ struct Data {
 	// On-planet Stuff
 	CupMaterial cupMaterial;
 	bool useNormalMap;
+	bool useShadows;
 	bool useAdvancedShading;
+	bool drawMinimap;
 	glm::vec3 light1Color;
 	glm::vec3 light2Color;
-	bool drawMinimap;
 
 	bool dayNightCycle;
 	glm::vec3 dayColor;

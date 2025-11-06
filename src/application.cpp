@@ -89,6 +89,7 @@ public:
         data.textures.envMap = &envMap;
 
         data.useNormalMap = false;
+        data.useShadows = false;
         data.useAdvancedShading = false;
         data.useEnvironmentMap = false;
         data.useAnimatedTexture = false;
@@ -212,9 +213,12 @@ public:
         ImGui::SliderFloat("Ambient coeff.", &p.ambientCoeff, 0.f, 1.f, "%.1f");
 
         ImGui::Separator();
-        ImGui::Text("Comet (Bezier curve)");
-        ImGui::Checkbox("Draw comet trajectory", &drawCometTrajectory);
-        ImGui::SliderFloat("Comet trail length", &data.cometTrailLength, 0.f, 10.f, "%.1f");
+        ImGui::Text("Comet (Bezier curve)");\
+        ImGui::Checkbox("Draw comet", &drawComet);
+        if (drawComet) {
+            ImGui::Checkbox("Draw comet trajectory", &drawCometTrajectory);
+            ImGui::SliderFloat("Comet trail length", &data.cometTrailLength, 0.f, 10.f, "%.1f");
+        }
 
         ImGui::Separator();
         ImGui::Checkbox("Environment map", &data.useEnvironmentMap);
@@ -257,6 +261,7 @@ public:
 
                     ImGui::Separator();
                     ImGui::Checkbox("Normal map", &data.useNormalMap);
+                    ImGui::Checkbox("Shadows", &data.useShadows);
                     ImGui::Checkbox("Minimap", &data.drawMinimap);
 
                     ImGui::Checkbox("Day/night cycle", &data.dayNightCycle);
@@ -299,7 +304,7 @@ public:
             }
 
             // Clear the screen
-            glClearColor(0.04f, 0.04f, 0.08f, 1.0f);
+            glClearColor(0.08f, 0.08f, 0.16f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             glEnable(GL_DEPTH_TEST);
@@ -309,11 +314,14 @@ public:
             case 0:
                 m_viewMatrix = trackball.viewMatrix();
                 renderSolarSystemScene(data, m_projectionMatrix, m_viewMatrix);
-                renderComet(data, m_projectionMatrix, m_viewMatrix);
-                if (drawCometTrajectory) {
-                    renderCometTrajectory(data, m_projectionMatrix, m_viewMatrix);
+
+                if (drawComet) {
+                    renderComet(data, m_projectionMatrix, m_viewMatrix);
+                    if (drawCometTrajectory) {
+                        renderCometTrajectory(data, m_projectionMatrix, m_viewMatrix);
+                    }
+                    renderCometTrail(data, m_projectionMatrix, m_viewMatrix);
                 }
-                renderCometTrail(data, m_projectionMatrix, m_viewMatrix);
                 break;
             case 1:
                 if (selectedViewpoint == 0) {
@@ -438,6 +446,7 @@ private:
 
     int selectedViewpoint = 0;
 
+    bool drawComet = true;
     bool drawCometTrajectory = false;
 
     Texture frame1;

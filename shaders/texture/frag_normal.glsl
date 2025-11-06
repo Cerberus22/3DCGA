@@ -26,6 +26,8 @@ uniform mat4 lightMVP2;
 uniform mat4 mvpMatrix;
 uniform mat4 modelMatrix;
 
+uniform bool useShadows;
+
 in vec3 fragPosition;
 in vec3 fragNormal;
 in vec2 fragTexCoord;
@@ -54,7 +56,7 @@ vec3 compute(vec3 lightPosition, vec3 lightColor, int i) {
     }
 
 
-    if (viewDepth - 0.00005 > mapDepth) {
+    if (viewDepth - 0.00005 > mapDepth && useShadows) {
         return vec3(0);
     }
 

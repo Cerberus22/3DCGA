@@ -245,6 +245,37 @@ void renderPlanet(Data& data, Planet planet, glm::mat4 projectionMatrix, glm::ma
 	ball->draw(shader);
 }
 
+Texture* frameNumber(Data& data) {
+	auto now = system_clock::now();
+		auto ms = duration_cast<milliseconds>(now.time_since_epoch()).count();
+		double scaledTime = (ms / 1000.0) * data.animationSpeed;
+		int frameNumber = static_cast<int>(std::floor(std::fmod(scaledTime, 10.0)));
+
+		switch (frameNumber)
+		{
+		case 0:
+			return data.textures.frame10;
+		case 1:
+			return data.textures.frame1;
+		case 2:
+			return data.textures.frame2;
+		case 3:
+			return data.textures.frame3;
+		case 4:
+			return data.textures.frame4;
+		case 5:
+			return data.textures.frame5;
+		case 6:
+			return data.textures.frame6;
+		case 7:
+			return data.textures.frame7;
+		case 8:
+			return data.textures.frame8;
+		case 9:
+			return data.textures.frame9;
+		}
+}
+
 // Renders the planets
 void renderSolarSystemScene(Data& data, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
 	const Shader& nightSkyShader = *data.shaders.nightSkyShader;
@@ -255,47 +286,6 @@ void renderSolarSystemScene(Data& data, glm::mat4 projectionMatrix, glm::mat4 vi
 	const glm::mat3 normalModelMatrix = glm::inverseTranspose(glm::mat3(modelMatrix));
 
 	if (data.useAnimatedTexture) {
-		auto now = system_clock::now();
-		auto ms = duration_cast<milliseconds>(now.time_since_epoch()).count();
-		double scaledTime = (ms / 1000.0) * data.animationSpeed;
-		int frameNumber = static_cast<int>(std::floor(std::fmod(scaledTime, 10.0)));
-
-		Texture* frame;
-
-		switch (frameNumber)
-		{
-		case 0:
-			frame = data.textures.frame10;
-			break;
-		case 1:
-			frame = data.textures.frame1;
-			break;
-		case 2:
-			frame = data.textures.frame2;
-			break;
-		case 3:
-			frame = data.textures.frame3;
-			break;
-		case 4:
-			frame = data.textures.frame4;
-			break;
-		case 5:
-			frame = data.textures.frame5;
-			break;
-		case 6:
-			frame = data.textures.frame6;
-			break;
-		case 7:
-			frame = data.textures.frame7;
-			break;
-		case 8:
-			frame = data.textures.frame8;
-			break;
-		case 9:
-			frame = data.textures.frame9;
-			break;
-		}
-
 		// Render animated background
 		glDisable(GL_DEPTH_TEST);
 		glDepthMask(GL_FALSE);
@@ -305,6 +295,7 @@ void renderSolarSystemScene(Data& data, glm::mat4 projectionMatrix, glm::mat4 vi
 		glUniformMatrix4fv(nightSkyShader.getUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
 		glUniformMatrix3fv(nightSkyShader.getUniformLocation("normalModelMatrix"), 1, GL_FALSE, glm::value_ptr(normalModelMatrix));
 
+		Texture* frame = frameNumber(data);
 		frame->bind(GL_TEXTURE0);
 
 		glUniform1i(nightSkyShader.getUniformLocation("tex"), 0);
@@ -481,7 +472,7 @@ void renderCometTrajectory(Data& data, glm::mat4 projectionMatrix, glm::mat4 vie
 
     shader.bind();
     glUniformMatrix4fv(shader.getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvp));
-	glUniform3fv(shader.getUniformLocation("emissiveColor"), 1, glm::value_ptr(glm::vec3(0.0f, 0.2f, 0.1f)));
+	glUniform3fv(shader.getUniformLocation("emissiveColor"), 1, glm::value_ptr(glm::vec3(0.0f, 0.8f, 0.4f)));
 
 	glBindVertexArray(trajVao);
 	glBindBuffer(GL_ARRAY_BUFFER, trajVbo);

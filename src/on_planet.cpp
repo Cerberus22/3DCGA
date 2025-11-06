@@ -195,6 +195,8 @@ void shadeOnPlanetScene(Data& data, glm::vec3 light1Position, glm::vec3 light2Po
 			glUniform1f(shader->getUniformLocation("shininess"), data.cupMaterial.m.shininess);
 
 			glUniform3fv(shader->getUniformLocation("tangent"), 1, glm::value_ptr(tangents.at(0)));
+
+			glUniform1i(shader->getUniformLocation("useShadows"), data.useShadows);
 			
 			// Normal map
 			data.textures.wallNormal->bind(GL_TEXTURE0);
