@@ -27,7 +27,5 @@ void renderEnvMap(Data& data) {
 	data.textures.envMap->bind(GL_TEXTURE0);
 	glUniform1i(shader.getUniformLocation("envMap"), 0);
 
-	std::cout << t->position().x << ", " << t->position().y << ", " << t->position().z << ", " << std::endl;
-
 	ball.draw(shader);
 }
