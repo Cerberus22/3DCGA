@@ -50,6 +50,7 @@ struct Shaders {
 	Shader* minimapShader;
 	Shader* oceanShader;
 	Shader* shadowShader;
+	Shader* envShader;
 };
 
 struct Meshes {
@@ -57,12 +58,14 @@ struct Meshes {
 	std::vector<GPUMesh>* quad;
 	std::vector<GPUMesh>* cup;
 	std::vector<GPUMesh>* ocean;
+	std::vector<GPUMesh>* cube;
 };
 
 struct Textures {
 	Texture* noise;
 	Texture* nightSky;
 	Texture* wallNormal;
+	Texture* envMap;
 	GLuint minimapTexture;
 
 	Texture* frame1;

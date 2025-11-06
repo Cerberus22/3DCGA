@@ -1,0 +1,1 @@
+void renderEnvMap(Data& data);

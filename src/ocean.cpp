@@ -14,7 +14,7 @@ void renderOcean(Data& data) {
 	glm::mat4 viewMatrix = data.trackball->viewMatrix();
 	glm::mat4 projectionMatrix = data.trackball->projectionMatrix();
 	glm::mat4 mvpMatrix = projectionMatrix * viewMatrix * modelMatrix;
-	glm::mat4 normalModelMatrix = glm::inverseTranspose(glm::mat3(modelMatrix));
+	glm::mat3 normalModelMatrix = glm::inverseTranspose(glm::mat3(modelMatrix));
 
 	glUniformMatrix4fv(oceanShader.getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvpMatrix));
 	glUniformMatrix4fv(oceanShader.getUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));

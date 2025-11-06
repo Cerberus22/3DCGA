@@ -3,6 +3,7 @@
 #include "solar_system.h"
 #include "on_planet.h"
 #include "ocean.h"
+#include "envmap.h"
 #include "maps.h"
 // Always include window first (because it includes glfw, which includes GL which needs to be included AFTER glew).
 // Can't wait for modules to fix this stuff...
@@ -34,6 +35,7 @@ public:
         , noise(RESOURCE_ROOT "resources/textures/noise.png")
         , nightSky(RESOURCE_ROOT "resources/textures/nightsky.jpg")
         , wallNormal(RESOURCE_ROOT "resources/textures/normalmappy.jpg")
+        , envMap(RESOURCE_ROOT "resources/textures/envMap.jpg")
         , frame1(RESOURCE_ROOT "resources/textures/animated/animated1.jpg")
         , frame2(RESOURCE_ROOT "resources/textures/animated/animated2.jpg")
         , frame3(RESOURCE_ROOT "resources/textures/animated/animated3.jpg")
@@ -58,12 +60,14 @@ public:
         ball = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/ball_s.obj");
         quad = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/quad.obj");
         cup = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/champions.obj");
+        cube = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/cube.obj");
         ocean = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/ocean.obj");
 
         data.meshes.ball = &ball;
         data.meshes.quad = &quad;
         data.meshes.cup = &cup;
         data.meshes.ocean = &ocean;
+        data.meshes.cube = &cube;
 
         data.t_step = 0.05f;
 
@@ -82,6 +86,7 @@ public:
         data.textures.noise = &noise;
         data.textures.nightSky = &nightSky;
         data.textures.wallNormal = &wallNormal;
+        data.textures.envMap = &envMap;
 
         data.useNormalMap = false;
         data.useAdvancedShading = false;
@@ -166,6 +171,13 @@ public:
             shadowShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/texture/frag_minimap.glsl");
             shadowShader = shadowShaderBuilder.build();
             data.shaders.shadowShader = &shadowShader;
+
+            ShaderBuilder envShaderBuilder;
+            envShaderBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/shading/vert_general.glsl");
+            envShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/environment/frag_env.glsl");
+            envShader = envShaderBuilder.build();
+            data.shaders.envShader = &envShader;
+
         } catch (ShaderLoadingException e) {
             std::cerr << e.what() << std::endl;
         }
@@ -213,7 +225,7 @@ public:
     void update()
     {
         int sceneNr = 0;
-        const char* scenes[] = { "Solar System", "On planet", "Ocean"};
+        const char* scenes[] = { "Solar System", "On planet", "Ocean", "Environment map"};
 
         const char* viewpoints[] = { "First", "Second" };
 
@@ -228,7 +240,7 @@ public:
             if (showUI) {
                 ImGui::Begin("Assignment 2");
 
-                ImGui::Combo("Scene", &sceneNr, scenes, 3);
+                ImGui::Combo("Scene", &sceneNr, scenes, 4);
                 ImGui::SliderFloat("Time Speed", &data.t_step, 0.f, 1.f, "%.3f");
                 ImGui::Text("Time: %.3f", data.time);
                 ImGui::Separator();
@@ -308,7 +320,6 @@ public:
                     m_viewMatrix = trackball.viewMatrix();
                 }
                 else {
-                    // TODO: trackball still gets updated, even though we do not intend to
                     glm::vec3 cameraPos(5, 3, 5);
                     glm::vec3 target(0, 0, 0);
                     glm::vec3 up(0, 1, 0);
@@ -318,6 +329,10 @@ public:
                 break;
             case 2:
                 renderOcean(data);
+                break;
+            case 3:
+                renderEnvMap(data);
+                break;
             }
             m_window.swapBuffers();
         }
@@ -392,11 +407,13 @@ private:
     Shader minimapShader;
     Shader oceanShader;
     Shader shadowShader;
+    Shader envShader;
 
     std::vector<GPUMesh> ball;
     std::vector<GPUMesh> cup;
     std::vector<GPUMesh> quad;
     std::vector<GPUMesh> ocean;
+    std::vector<GPUMesh> cube;
 
     Texture m_texture;
     bool m_useMaterial { true };
@@ -413,6 +430,7 @@ private:
     Texture nightSky;
     Texture noise;
     Texture wallNormal;
+    Texture envMap;
     GLuint normalMap;
 
     GLuint minimapTexture;

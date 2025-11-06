@@ -17,7 +17,7 @@ add_executable(Master_TechDemo
 	"src/structs.h" 
 	"src/solar_system.h"
 	"src/on_planet.h"
-	"src/on_planet.cpp" "src/maps.cpp" "src/maps.h" "src/ocean.cpp" "src/ocean.h")
+	"src/on_planet.cpp" "src/maps.cpp" "src/maps.h" "src/ocean.cpp" "src/ocean.h" "src/envmap.cpp" "src/envmap.h")
 
 target_compile_definitions(Master_TechDemo PRIVATE RESOURCE_ROOT="${CMAKE_CURRENT_LIST_DIR}/")
 target_compile_features(Master_TechDemo PRIVATE cxx_std_20)
