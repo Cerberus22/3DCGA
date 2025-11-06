@@ -110,11 +110,11 @@ struct Data {
 	bool useNormalMap;
 	bool useShadows;
 	bool useAdvancedShading;
-	bool drawMinimap;
+	bool drawMinimap = false;
 	glm::vec3 light1Color;
 	glm::vec3 light2Color;
 
-	bool dayNightCycle;
+	bool dayNightCycle = false;
 	glm::vec3 dayColor;
 	glm::vec3 nightColor;
 

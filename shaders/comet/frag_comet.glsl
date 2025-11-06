@@ -6,6 +6,5 @@ uniform vec3 emissiveColor;
 
 void main()
 {
-    // Simple emissive output
     fragColor = vec4(emissiveColor, 1.0);
 }

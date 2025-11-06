@@ -200,7 +200,7 @@ void shadeOnPlanetScene(Data& data, glm::vec3 light1Position, glm::vec3 light2Po
 			
 			// Normal map
 			data.textures.wallNormal->bind(GL_TEXTURE0);
-			glUniform1i(shader->getUniformLocation("useNormalMap"), data.useNormalMap);
+			glUniform1i(shader->getUniformLocation("useNormalMap"), data.useNormalMap && i == 5);
 			glUniform1i(shader->getUniformLocation("normalMap"), 0);
 
 			// Shadow maps

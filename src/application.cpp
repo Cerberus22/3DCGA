@@ -428,7 +428,6 @@ private:
 
     Trackball trackball;
 
-    // Projection and view matrices for you to fill in and use
     glm::mat4 m_projectionMatrix = glm::perspective(glm::radians(80.0f), 1.0f, 0.1f, 30.0f);
     glm::mat4 m_viewMatrix = glm::lookAt(glm::vec3(-1, 1, -1), glm::vec3(0), glm::vec3(0, 1, 0));
     glm::mat4 m_modelMatrix { 1.0f };
@@ -459,8 +458,6 @@ private:
     Texture frame8;
     Texture frame9;
     Texture frame10;
-    // Texture frame11;
-    // Texture frame12;
 };
 
 int main()
