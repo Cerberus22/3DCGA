@@ -34,6 +34,16 @@ public:
         , noise(RESOURCE_ROOT "resources/textures/noise.png")
         , nightSky(RESOURCE_ROOT "resources/textures/nightsky.jpg")
         , wallNormal(RESOURCE_ROOT "resources/textures/normalmappy.jpg")
+        , frame1(RESOURCE_ROOT "resources/textures/animated/animated1.jpg")
+        , frame2(RESOURCE_ROOT "resources/textures/animated/animated2.jpg")
+        , frame3(RESOURCE_ROOT "resources/textures/animated/animated3.jpg")
+        , frame4(RESOURCE_ROOT "resources/textures/animated/animated4.jpg")
+        , frame5(RESOURCE_ROOT "resources/textures/animated/animated5.jpg")
+        , frame6(RESOURCE_ROOT "resources/textures/animated/animated6.jpg")
+        , frame7(RESOURCE_ROOT "resources/textures/animated/animated7.jpg")
+        , frame8(RESOURCE_ROOT "resources/textures/animated/animated8.jpg")
+        , frame9(RESOURCE_ROOT "resources/textures/animated/animated9.jpg")
+        , frame10(RESOURCE_ROOT "resources/textures/animated/animated10.jpg")
         , trackball(&m_window, glm::radians(45.f))
     {
         m_window.registerKeyCallback([this](int key, int scancode, int action, int mods) {
@@ -44,16 +54,6 @@ public:
         });
 
         showUI = true;
-
-        /*
-        m_window.registerMouseMoveCallback(std::bind(&Application::onMouseMove, this, std::placeholders::_1));
-        m_window.registerMouseButtonCallback([this](int button, int action, int mods) {
-            if (action == GLFW_PRESS)
-                onMouseClicked(button, mods);
-            else if (action == GLFW_RELEASE)
-                onMouseReleased(button, mods);
-        });
-        */
 
         ball = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/ball_s.obj");
         quad = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/quad.obj");
@@ -85,6 +85,8 @@ public:
 
         data.useNormalMap = false;
         data.useAdvancedShading = false;
+        data.useEnvironmentMap = false;
+        data.useAnimatedTexture = false;
 
         data.dayColor = glm::vec3(1, 0.8, 0.8);
 	    data.nightColor = glm::vec3(0.6, 0.6, 1);
@@ -93,16 +95,23 @@ public:
         data.textures.minimapTexture = minimapTexture;
         data.framebuffers.minimapFramebuffer = minimapFramebuffer;
 
+        data.textures.frame1 = &frame1;
+        data.textures.frame2 = &frame2;
+        data.textures.frame3 = &frame3;
+        data.textures.frame4 = &frame4;
+        data.textures.frame5 = &frame5;
+        data.textures.frame6 = &frame6;
+        data.textures.frame7 = &frame7;
+        data.textures.frame8 = &frame8;
+        data.textures.frame9 = &frame9;
+        data.textures.frame10 = &frame10;
+
+        data.animationSpeed = 5.f;
+
         createBuffers();
         generateShadowStuff();
 
         try {
-            // Any new shaders can be added below in similar fashion.
-            // ==> Don't forget to reconfigure CMake when you do!
-            //     Visual Studio: PROJECT => Generate Cache for ComputerGraphics
-            //     VS Code: ctrl + shift + p => CMake: Configure => enter
-            // ....
-
             ShaderBuilder simpleShaderBuilder;
             simpleShaderBuilder.addStage(GL_VERTEX_SHADER, RESOURCE_ROOT "shaders/shading/vert_general.glsl");
             simpleShaderBuilder.addStage(GL_FRAGMENT_SHADER, RESOURCE_ROOT "shaders/shading/frag_simple_shading.glsl");
@@ -197,6 +206,8 @@ public:
 
         ImGui::Separator();
         ImGui::Checkbox("Environment map", &data.useEnvironmentMap);
+        ImGui::Checkbox("Animated texture (The Matrix mode)", &data.useAnimatedTexture);
+        ImGui::SliderFloat("Animation speed", &data.animationSpeed, 0.f, 10.f, "%.1f");
     }
 
     void update()
@@ -209,14 +220,11 @@ public:
         while (!m_window.shouldClose()) {
             data.time += data.t_step / 100;
 
-            // This is your game loop
-            // Put your real-time logic and rendering in here
             m_window.updateInput();
 
             m_viewMatrix = trackball.viewMatrix();
             m_projectionMatrix = trackball.projectionMatrix();
 
-            // Use ImGui for easy input/output of ints, floats, strings, etc...
             if (showUI) {
                 ImGui::Begin("Assignment 2");
 
@@ -277,6 +285,7 @@ public:
 
                 ImGui::End();
             }
+
             // Clear the screen
             glClearColor(0.04f, 0.04f, 0.08f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -310,7 +319,6 @@ public:
             case 2:
                 renderOcean(data);
             }
-            // Processes input and swaps the window buffer
             m_window.swapBuffers();
         }
         deleteTexture(minimapTexture, minimapFramebuffer);
@@ -413,6 +421,19 @@ private:
     int selectedViewpoint = 0;
 
     bool drawCometTrajectory = false;
+
+    Texture frame1;
+    Texture frame2;
+    Texture frame3;
+    Texture frame4;
+    Texture frame5;
+    Texture frame6;
+    Texture frame7;
+    Texture frame8;
+    Texture frame9;
+    Texture frame10;
+    // Texture frame11;
+    // Texture frame12;
 };
 
 int main()

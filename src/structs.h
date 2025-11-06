@@ -64,6 +64,17 @@ struct Textures {
 	Texture* nightSky;
 	Texture* wallNormal;
 	GLuint minimapTexture;
+
+	Texture* frame1;
+	Texture* frame2;
+	Texture* frame3;
+	Texture* frame4;
+	Texture* frame5;
+	Texture* frame6;
+	Texture* frame7;
+	Texture* frame8;
+	Texture* frame9;
+	Texture* frame10;
 };
 
 struct Framebuffers {
@@ -87,6 +98,8 @@ struct Data {
 	float t_step;
 	int selectedPlanetIndex;
 	bool useEnvironmentMap;
+	bool useAnimatedTexture;
+	float animationSpeed;
 	float cometTrailLength;
 
 	// On-planet Stuff

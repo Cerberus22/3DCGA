@@ -5,6 +5,10 @@
 #include "mesh.h"
 #include <framework/shader.h>
 #include <iostream>
+#include <chrono>
+#include <ctime>
+
+using namespace std::chrono;
 
 // -------------------------------------------- PLANETS --------------------------------------------
 
@@ -250,7 +254,66 @@ void renderSolarSystemScene(Data& data, glm::mat4 projectionMatrix, glm::mat4 vi
 	const glm::mat4 mvpMatrix = projectionMatrix * viewMatrix * modelMatrix;
 	const glm::mat3 normalModelMatrix = glm::inverseTranspose(glm::mat3(modelMatrix));
 
-	if (data.useEnvironmentMap) {
+	if (data.useAnimatedTexture) {
+		auto now = system_clock::now();
+		auto ms = duration_cast<milliseconds>(now.time_since_epoch()).count();
+		double scaledTime = (ms / 1000.0) * data.animationSpeed;
+		int frameNumber = static_cast<int>(std::floor(std::fmod(scaledTime, 10.0)));
+
+		Texture* frame;
+
+		switch (frameNumber)
+		{
+		case 0:
+			frame = data.textures.frame10;
+			break;
+		case 1:
+			frame = data.textures.frame1;
+			break;
+		case 2:
+			frame = data.textures.frame2;
+			break;
+		case 3:
+			frame = data.textures.frame3;
+			break;
+		case 4:
+			frame = data.textures.frame4;
+			break;
+		case 5:
+			frame = data.textures.frame5;
+			break;
+		case 6:
+			frame = data.textures.frame6;
+			break;
+		case 7:
+			frame = data.textures.frame7;
+			break;
+		case 8:
+			frame = data.textures.frame8;
+			break;
+		case 9:
+			frame = data.textures.frame9;
+			break;
+		}
+
+		// Render animated background
+		glDisable(GL_DEPTH_TEST);
+		glDepthMask(GL_FALSE);
+
+		nightSkyShader.bind();
+		glUniformMatrix4fv(nightSkyShader.getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+		glUniformMatrix4fv(nightSkyShader.getUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
+		glUniformMatrix3fv(nightSkyShader.getUniformLocation("normalModelMatrix"), 1, GL_FALSE, glm::value_ptr(normalModelMatrix));
+
+		frame->bind(GL_TEXTURE0);
+
+		glUniform1i(nightSkyShader.getUniformLocation("tex"), 0);
+
+		ball->draw(nightSkyShader);
+
+		glEnable(GL_DEPTH_TEST);
+		glDepthMask(GL_TRUE);
+	} else if (data.useEnvironmentMap) {
 		// Render starry background
 		glDisable(GL_DEPTH_TEST);
 		glDepthMask(GL_FALSE);
