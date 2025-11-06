@@ -24,10 +24,19 @@ struct CupMaterial {
 };
 
 struct OceanData {
-	float amplitude;
-	float fx;	// x frequency
-	float fz;	// z frequency
-	float ft;	// t frequency
+	float kx = 0.75;	// x frequency
+	float ax = 1;	// x frequency
+	float kz = 0.27;	// z frequency
+	float az = 1.2;	// z frequency
+	float kt = 0.6;	// t frequency
+
+	float k1 = 0.3;	// k1 frequency
+	float a1 = 1;	// k1 frequency
+	float k1angle = -0.35;
+
+	float k2 = 0.05;	// k2 frequency
+	float a2 = 1.8;	// k2 frequency
+	float k2angle = -1;
 	bool doSubdivide = false;
 };
 

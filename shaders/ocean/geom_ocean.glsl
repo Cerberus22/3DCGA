@@ -14,7 +14,15 @@ uniform mat4 mvpMatrix;
 uniform float time;
 uniform float a;
 uniform float kx;
+uniform float ax;
 uniform float kz;
+uniform float az;
+uniform float k1;
+uniform float k1dir;
+uniform float a1;
+uniform float k2;
+uniform float k2dir;
+uniform float a2;
 uniform float w;
 
 uniform bool doSubdivide;
@@ -47,7 +55,7 @@ vec3 modifyY(vec3 pos) {
 
     return vec3(
         x,
-        a * (sin(kx * x + w*t) + sin(kz * z + w*t)),
+        ax*ceil(kx)*sin(kx * x + w*t) + az*ceil(kz)*sin(kz * z + w*t) + a1*ceil(k1)*sin(k1 * (k1dir*x+(1-k1dir)*z) + w*t) + a2*ceil(k2)*sin(k2 * (k2dir*x+(1-k2dir)*z) + w*t),
         z
     );
 }

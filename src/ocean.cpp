@@ -21,10 +21,17 @@ void renderOcean(Data& data) {
 	glUniformMatrix3fv(oceanShader.getUniformLocation("normalModelMatrix"), 1, GL_FALSE, glm::value_ptr(normalModelMatrix));
 
 	glUniform1f(oceanShader.getUniformLocation("time"), data.time);
-	glUniform1f(oceanShader.getUniformLocation("a"), data.oceanData.amplitude);
-	glUniform1f(oceanShader.getUniformLocation("kx"), data.oceanData.fx);
-	glUniform1f(oceanShader.getUniformLocation("kz"), data.oceanData.fz);
-	glUniform1f(oceanShader.getUniformLocation("w"), data.oceanData.ft);
+	glUniform1f(oceanShader.getUniformLocation("w"), data.oceanData.kt);
+	glUniform1f(oceanShader.getUniformLocation("kx"), data.oceanData.kx);
+	glUniform1f(oceanShader.getUniformLocation("ax"), data.oceanData.ax);
+	glUniform1f(oceanShader.getUniformLocation("kz"), data.oceanData.kz);
+	glUniform1f(oceanShader.getUniformLocation("az"), data.oceanData.az);
+	glUniform1f(oceanShader.getUniformLocation("k1"), data.oceanData.k1);
+	glUniform1f(oceanShader.getUniformLocation("k1dir"), data.oceanData.k1angle);
+	glUniform1f(oceanShader.getUniformLocation("a1"), data.oceanData.a1);
+	glUniform1f(oceanShader.getUniformLocation("k2"), data.oceanData.k2);
+	glUniform1f(oceanShader.getUniformLocation("k2dir"), data.oceanData.k2angle);
+	glUniform1f(oceanShader.getUniformLocation("a2"), data.oceanData.a2);
 	glUniform1i(oceanShader.getUniformLocation("doSubdivide"), data.oceanData.doSubdivide);
 
 	for (GPUMesh& m : ocean) {

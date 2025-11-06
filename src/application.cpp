@@ -89,12 +89,6 @@ public:
         data.dayColor = glm::vec3(1, 0.8, 0.8);
 	    data.nightColor = glm::vec3(0.6, 0.6, 1);
 
-        data.oceanData.amplitude = 1.0f;
-        data.oceanData.fx = 0.3f;
-        data.oceanData.fz = 0.6f;
-        data.oceanData.ft = 0.5f;
-        data.oceanData.doSubdivide = false;
-
         createTexture(minimapTexture, minimapFramebuffer);
         data.textures.minimapTexture = minimapTexture;
         data.framebuffers.minimapFramebuffer = minimapFramebuffer;
@@ -259,10 +253,24 @@ public:
                     }
                     break;
                 case 2:
-                    ImGui::SliderFloat("Amplitude", &data.oceanData.amplitude, 0, 3, "%.2f");
-                    ImGui::SliderFloat("X Frequency", &data.oceanData.fx, 0, 1, "%.2f");
-                    ImGui::SliderFloat("Y Frequency", &data.oceanData.fz, 0, 1, "%.2f");
-                    ImGui::SliderFloat("Time Frequency", &data.oceanData.ft, 0, 1, "%.2f");
+                    ImGui::SliderFloat("Wave speed", &data.oceanData.kt, 0, 1, "%.2f");
+                    ImGui::Separator();
+                    ImGui::SliderFloat("X Amplitude", &data.oceanData.ax, 0, 3, "%.2f");
+                    ImGui::SliderFloat("X Frequency", &data.oceanData.kx, 0, 1, "%.2f");
+                    ImGui::Separator();
+                    ImGui::SliderFloat("Z Amplitude", &data.oceanData.az, 0, 3, "%.2f");
+                    ImGui::SliderFloat("Z Frequency", &data.oceanData.kz, 0, 1, "%.2f");
+                    
+                    ImGui::Separator();
+                    ImGui::Text("Custom Axes");
+                    ImGui::SliderFloat("Custom1 Amplitude", &data.oceanData.a1, 0, 3, "%.2f");
+                    ImGui::SliderFloat("Custom1 Frequency", &data.oceanData.k1, 0, 1, "%.2f");
+                    ImGui::SliderFloat("Custom1 Angle", &data.oceanData.k1angle, -1, 1, "%.2f");
+                    ImGui::Separator();
+                    ImGui::SliderFloat("Custom2 Amplitude", &data.oceanData.a2, 0, 3, "%.2f");
+                    ImGui::SliderFloat("Custom2 Frequency", &data.oceanData.k2, 0, 1, "%.2f");
+                    ImGui::SliderFloat("Custom2 Angle", &data.oceanData.k2angle, -1, 1, "%.2f");
+                    ImGui::Separator();
                     ImGui::Checkbox("Subdivide", &data.oceanData.doSubdivide);
                     break;
                 }
