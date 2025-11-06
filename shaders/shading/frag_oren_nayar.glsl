@@ -3,8 +3,6 @@
 uniform vec3 kd;
 uniform float rho;	 // albedo
 uniform float sigma; // roughness
-uniform float ambientCoeff;
-// uniform float transparency;
 
 float PI = 3.14159;
 

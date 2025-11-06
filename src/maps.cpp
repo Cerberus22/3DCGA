@@ -30,23 +30,6 @@ void createTexture(GLuint& texture, GLuint& framebuffer) {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-//void renderSmoothNormalMap() {
-//	// Generate texture
-//	Shader texShader;
-//	/// build sader
-//
-//	texShader.bind();
-//
-//	glViewport(0, 0, 1024, 1024);
-//
-//	GLuint trianglesvao;
-//
-//	glDrawElements(GL_TRIANGLES, 0, 3, &trianglesvao);
-//
-//	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-//	//return normalMap;
-//}
-
 void deleteTexture(GLuint& texture, GLuint& framebuffer) {
 	glDeleteTextures(1, &texture);
 	glDeleteFramebuffers(1, &framebuffer);

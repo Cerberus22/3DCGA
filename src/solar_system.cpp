@@ -245,6 +245,7 @@ void renderPlanet(Data& data, Planet planet, glm::mat4 projectionMatrix, glm::ma
 	ball->draw(shader);
 }
 
+// Gets the appropriate frame for the animated texture
 Texture* frameNumber(Data& data) {
 	auto now = system_clock::now();
 		auto ms = duration_cast<milliseconds>(now.time_since_epoch()).count();
@@ -366,16 +367,18 @@ void renderComet(Data& data, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
 
 	int numSegments = (int)cometPath.size();
 
+	// Move comet along its path
 	cometPathProgress += 0.02 * data.t_step;
     if (cometPathProgress > 1) cometPathProgress -= 1;
     
     int currentSegmentIndex = std::floor(cometPathProgress * numSegments);
 	if (currentSegmentIndex >= numSegments) currentSegmentIndex = numSegments - 1; // edge case when we are exactly at 1
     
+	// Find where it is along the current segment
 	float posAlongSegment = (cometPathProgress * numSegments) - currentSegmentIndex;
     glm::vec3 cometPos = evaluateCubicBezier(cometPath[currentSegmentIndex], posAlongSegment);
 
-	// Adding data to comet trail
+	// Add initial data to comet trail
 	if (cometTrail.empty()) {
 		cometTrail.push_back(cometPos);
 		lastCometPos = cometPos;
@@ -384,14 +387,14 @@ void renderComet(Data& data, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
 	float distance = glm::length(cometPos - lastCometPos);
 	accumulatedDistance += distance;
 
-	// only add new point if comet moved enough distance
+	// Only add new point if comet moved enough distance
 	if (accumulatedDistance >= 0.1f) {
 		cometTrail.push_back(cometPos);
 		lastCometPos = cometPos;
 		accumulatedDistance = 0.0f;
 	}
 
-	// compute total trail length and remove oldest points if needed
+	// Compute total trail length and remove oldest points
 	float totalLength = 0.0f;
 	for (int i = cometTrail.size() - 1; i > 0; i--) {
 		totalLength += glm::length(cometTrail[i] - cometTrail[i - 1]);
@@ -458,7 +461,7 @@ void destroyBuffers() {
 void renderCometTrajectory(Data& data, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
 	const Shader& shader = *data.shaders.cometShader;
 	
-	// Sample points along the entire path
+	// Sample points along the path
 	trajectoryPoints.clear();
     const int samplesPerSegment = 40;
     for (const auto& segment : cometPath) {
@@ -487,7 +490,7 @@ void renderCometTrail(Data& data, glm::mat4 projectionMatrix, glm::mat4 viewMatr
 	
 	if (cometTrail.size() < 2) return;
 
-    // Compute fading alphas
+    // Compute fading alphas for the trail
 	alphas.clear();
     alphas.reserve(cometTrail.size());
     for (size_t i = 0; i < cometTrail.size(); ++i) {

@@ -25,17 +25,17 @@ struct CupMaterial {
 
 struct OceanData {
 	float kx = 0.75;	// x frequency
-	float ax = 1;	// x frequency
+	float ax = 1;		// x frequency
 	float kz = 0.27;	// z frequency
-	float az = 1.2;	// z frequency
-	float kt = 0.6;	// t frequency
+	float az = 1.2;		// z frequency
+	float kt = 0.6;		// t frequency
 
-	float k1 = 0.3;	// k1 frequency
-	float a1 = 1;	// k1 frequency
+	float k1 = 0.3;		// k1 frequency
+	float a1 = 1;		// k1 frequency
 	float k1angle = -0.35;
 
 	float k2 = 0.05;	// k2 frequency
-	float a2 = 1.8;	// k2 frequency
+	float a2 = 1.8;		// k2 frequency
 	float k2angle = -1;
 	bool doSubdivide = false;
 };
@@ -84,9 +84,7 @@ struct Framebuffers {
 	GLuint minimapFramebuffer;
 };
 
-/*
-	This struct can be used for passing interface stuff to the actual shaders.
-*/
+// This struct can be used for passing interface stuff to the actual shaders
 struct Data {
 	Trackball* trackball;
 		
@@ -100,16 +98,16 @@ struct Data {
 	float time;
 	float t_step;
 	int selectedPlanetIndex;
-	bool useEnvironmentMap;
-	bool useAnimatedTexture;
+	bool useEnvironmentMap = false;
+	bool useAnimatedTexture = false;
 	float animationSpeed;
 	float cometTrailLength;
 
 	// On-planet Stuff
 	CupMaterial cupMaterial;
-	bool useNormalMap;
-	bool useShadows;
-	bool useAdvancedShading;
+	bool useNormalMap = false;
+	bool useShadows = false;
+	bool useAdvancedShading = false;
 	bool drawMinimap = false;
 	glm::vec3 light1Color;
 	glm::vec3 light2Color;

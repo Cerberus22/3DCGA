@@ -57,12 +57,14 @@ public:
 
         showUI = true;
 
+        // Load meshes
         ball = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/ball_s.obj");
         quad = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/quad.obj");
         cup = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/champions.obj");
         cube = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/cube.obj");
         ocean = GPUMesh::loadMeshGPU(RESOURCE_ROOT "resources/ocean.obj");
 
+        // Set parameters of the Data struct that we pass around
         data.meshes.ball = &ball;
         data.meshes.quad = &quad;
         data.meshes.cup = &cup;
@@ -70,10 +72,10 @@ public:
         data.meshes.cube = &cube;
 
         data.t_step = 0.05f;
-
         data.time = 0.f;
-        data.planets = populatePlanets();
         data.trackball = &trackball;
+
+        data.planets = populatePlanets();
         data.selectedPlanetIndex = 0;
         data.cometTrailLength = 5.0f;
 
@@ -88,12 +90,6 @@ public:
         data.textures.wallNormal = &wallNormal;
         data.textures.envMap = &envMap;
 
-        data.useNormalMap = false;
-        data.useShadows = false;
-        data.useAdvancedShading = false;
-        data.useEnvironmentMap = false;
-        data.useAnimatedTexture = false;
-
         data.dayColor = glm::vec3(1, 0.8, 0.8);
 	    data.nightColor = glm::vec3(0.6, 0.6, 1);
 
@@ -101,6 +97,7 @@ public:
         data.textures.minimapTexture = minimapTexture;
         data.framebuffers.minimapFramebuffer = minimapFramebuffer;
 
+        // For animated texture
         data.textures.frame1 = &frame1;
         data.textures.frame2 = &frame2;
         data.textures.frame3 = &frame3;
@@ -310,6 +307,7 @@ public:
             glEnable(GL_DEPTH_TEST);
             glDepthFunc(GL_LEQUAL);
 
+            // Render the selected scene
             switch (sceneNr) {
             case 0:
                 m_viewMatrix = trackball.viewMatrix();
@@ -349,9 +347,6 @@ public:
         deleteShadowStuff();
     }
 
-    // In here you can handle key presses
-    // key - Integer that corresponds to numbers in https://www.glfw.org/docs/latest/group__keys.html
-    // mods - Any modifier keys pressed, like shift or control
     void onKeyPressed(int key, int mods)
     {
         std::cout << "Key pressed: " << key << std::endl;
@@ -366,31 +361,21 @@ public:
         }
     }
 
-    // In here you can handle key releases
-    // key - Integer that corresponds to numbers in https://www.glfw.org/docs/latest/group__keys.html
-    // mods - Any modifier keys pressed, like shift or control
     void onKeyReleased(int key, int mods)
     {
         std::cout << "Key released: " << key << std::endl;
     }
 
-    // If the mouse is moved this function will be called with the x, y screen-coordinates of the mouse
     void onMouseMove(const glm::dvec2& cursorPos)
     {
         std::cout << "Mouse at position: " << cursorPos.x << " " << cursorPos.y << std::endl;
     }
 
-    // If one of the mouse buttons is pressed this function will be called
-    // button - Integer that corresponds to numbers in https://www.glfw.org/docs/latest/group__buttons.html
-    // mods - Any modifier buttons pressed
     void onMouseClicked(int button, int mods)
     {
         std::cout << "Pressed mouse button: " << button << std::endl;
     }
 
-    // If one of the mouse buttons is released this function will be called
-    // button - Integer that corresponds to numbers in https://www.glfw.org/docs/latest/group__buttons.html
-    // mods - Any modifier buttons pressed
     void onMouseReleased(int button, int mods)
     {
         std::cout << "Released mouse button: " << button << std::endl;
@@ -401,11 +386,7 @@ private:
 
     bool showUI;
 
-    // Shader for default rendering and for depth rendering
-    Shader m_defaultShader;
-    Shader m_shadowShader;
-
-    // Normal Shaders!
+    // Shaders!
     Shader simpleShader;
     Shader normalShader;
     Shader advancedShader;
@@ -432,6 +413,7 @@ private:
     glm::mat4 m_viewMatrix = glm::lookAt(glm::vec3(-1, 1, -1), glm::vec3(0), glm::vec3(0, 1, 0));
     glm::mat4 m_modelMatrix { 1.0f };
 
+    // The main data-holding struct to pass around
     Data data;
 
     Texture nightSky;

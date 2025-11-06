@@ -4,7 +4,6 @@ layout(triangles) in;
 layout(triangle_strip, max_vertices = 256) out;
 
 in vec3 geomPosition[];
-in vec3 geomNormal[];
 
 out vec3 fragPosition;
 out vec3 fragNormal;

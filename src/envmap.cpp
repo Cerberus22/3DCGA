@@ -6,7 +6,7 @@
 #include <iostream>
 
 void renderEnvMap(Data& data) {
-	// Make ball at center
+	// Make ball at the center
 	GPUMesh& ball = data.meshes.ball->at(0);
 	const Shader& shader = *data.shaders.envShader;
 	const Shader& nightSkyShader = *data.shaders.nightSkyShader;
@@ -14,16 +14,15 @@ void renderEnvMap(Data& data) {
 	Trackball* t = data.trackball;
 	
 	// Rotating here to turn the texture upright
-	// Seems like the minimap shader has an upside down texture but the texcords are also upside down
+	// Seems like the minimap shader has an upside down texture but the texcoords are also upside down
 	glm::mat4 modelMatrix = glm::translate(glm::mat4(1), data.trackball->position()) * glm::rotate(glm::mat4(1), glm::pi<float>(), glm::vec3(0, 1, 0)) * glm::rotate(glm::mat4(1), glm::pi<float>(), glm::vec3(1, 0, 0));
 	glm::mat4 mvpMatrix = t->projectionMatrix() * t->viewMatrix() * modelMatrix;
 	glm::mat3 normalModelMatrix = glm::inverseTranspose(glm::mat3(modelMatrix));
 
-
-
 	glDisable(GL_DEPTH_TEST);
 	glDepthMask(GL_FALSE);
 
+	// NightSkyShader is not very appropriately named here, but it works with environment maps in general
 	nightSkyShader.bind();
 	glUniformMatrix4fv(nightSkyShader.getUniformLocation("mvpMatrix"), 1, GL_FALSE, glm::value_ptr(mvpMatrix));
 	glUniformMatrix4fv(nightSkyShader.getUniformLocation("modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));

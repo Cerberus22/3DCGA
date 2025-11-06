@@ -11,7 +11,6 @@ layout(location = 1) in vec3 normal;
 layout(location = 2) in vec2 texCoord;
 
 uniform vec3 tangent;
-uniform vec3 bitangent;
 
 out vec3 fragPosition;
 out vec3 fragNormal;

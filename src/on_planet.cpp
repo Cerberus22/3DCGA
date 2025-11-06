@@ -5,6 +5,7 @@
 #include <framework/shader.h>
 #include <iostream>
 
+// Computes tangents to be used with a normal map
 std::vector<glm::vec3> computeTangents(const GPUMesh& mesh) {
 	std::vector<Vertex> vertices = mesh.vertices;
 	std::vector<glm::uvec3> triangles = mesh.triangles;
@@ -34,7 +35,6 @@ std::vector<glm::vec3> computeTangents(const GPUMesh& mesh) {
 	}
 	return tangents;
 }
-
 
 GLuint shadowBuffer1, shadowBuffer2, shadowTex1, shadowTex2;
 
@@ -143,6 +143,7 @@ void updateShadowTextures(Data& data, glm::mat4 modelMatrix, glm::mat4 lightMVP1
 	glViewport(0, 0, 1800, 900);
 }
 
+// Passes appropriate normals to appropriate shaders
 void shadeOnPlanetScene(Data& data, glm::vec3 light1Position, glm::vec3 light2Position, glm::mat4 lightMVP1, glm::mat4 lightMVP2, glm::mat4 modelMatrix, glm::mat4 mvpMatrix) {
 	std::vector<GPUMesh>& cup = *data.meshes.cup;
 	Shader* shader;
@@ -219,6 +220,7 @@ void shadeOnPlanetScene(Data& data, glm::vec3 light1Position, glm::vec3 light2Po
 	}
 }
 
+// Main rendering function
 void renderOnPlanetScene(Data& data, GLuint& minimapFramebuffer, glm::mat4 projectionMatrix, glm::mat4 viewMatrix) {
 	std::vector<GPUMesh>* cup = data.meshes.cup;
 	

@@ -23,7 +23,6 @@ uniform sampler2D shadowMap2;
 uniform mat4 lightMVP1;
 uniform mat4 lightMVP2;
 
-uniform mat4 mvpMatrix;
 uniform mat4 modelMatrix;
 
 uniform bool useShadows;

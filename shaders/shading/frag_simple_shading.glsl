@@ -4,7 +4,6 @@ uniform float ambientCoeff;
 uniform vec3 kd;
 uniform vec3 ks;
 uniform float shininess;
-// uniform float transparency;
 
 uniform vec3 cameraPosition;
 
@@ -13,8 +12,6 @@ uniform vec3 lightColor;
 
 uniform sampler2D normalMap;
 uniform bool hasSunTexture;
-
-uniform mat4 mvpMatrix;
 
 in vec3 fragPosition;
 in vec3 fragNormal;
